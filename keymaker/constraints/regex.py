@@ -1,6 +1,7 @@
 """Constraints for regex patterns"""
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from typing import Union
 
 import regex as re
 
@@ -20,10 +21,10 @@ class RegexConstraint(Constraint):
         Based on https://github.com/r2d4/rellm
     """
 
-    pattern: str
+    pattern: Union[str, re.Pattern[str]]
 
     def __post_init__(self):
-        self._pattern = re.compile(self.pattern)
+        self._pattern: re.Pattern[str] = re.compile(self.pattern) if isinstance(self.pattern, str) else self.pattern
 
     def _is_valid_token(self, token_id: int, partial_completion: str, model: "Model") -> bool:
         decoded_token = model.tokens[token_id]

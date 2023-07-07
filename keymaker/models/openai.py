@@ -177,7 +177,7 @@ class OpenAICompletion(Model):
     retry_sleep_time: float = 1.0
     max_token_selection: int = 300
     max_total_tokens: int = 4096
-    
+
     def __post_init__(self):
         self._tokenizer = tiktoken.encoding_for_model(self.model_name)
         self.tokens = openai_tokens(self._tokenizer)

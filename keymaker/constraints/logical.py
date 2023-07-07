@@ -1,7 +1,7 @@
 """Common logical constraints for combining other constraints"""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Set, Union, cast
+from typing import TYPE_CHECKING, List, Sequence, Set, Union, cast
 
 from keymaker.constraints.base import Constraint
 from keymaker.types import TokenConstraint
@@ -35,7 +35,7 @@ class AndConstraint(Constraint):
         constraints (List[Constraint]): The list of constraints to apply.
     """
 
-    constraints: List[Constraint]
+    constraints: Sequence[Constraint]
 
     def constrain_tokens(self, base_text: str, completion_text: str, model: "Model") -> Union[None, Set[int], str]:
         ret = None
@@ -65,7 +65,7 @@ class OrConstraint(Constraint):
         constraints (List[Constraint]): The list of constraints to apply.
     """
 
-    constraints: List[Constraint]
+    constraints: Sequence[Constraint]
 
     def constrain_tokens(self, base_text: str, completion_text: str, model: "Model") -> Union[None, Set[int], str]:
         ret = set()

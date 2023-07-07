@@ -16,3 +16,10 @@
     <br/>
   </p>
 </div>
+
+
+# Contributing
+Contributions are very welcome. Simply fork and open a PR!
+
+# Related
+Some constraints in this library are heavily derived from the work of [Matt Rickard](https://github.com/r2d4). Specifically, ReLLM and ParserLLM.
