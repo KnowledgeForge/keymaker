@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://lmql.ai">
+  <a href="https://keymaker.headjack.ai">
     <img src="https://github.com/KnowledgeForge/keymaker/blob/main/static/keymaker%20logo.png" alt="Logo" width="150">
   </a>
 
