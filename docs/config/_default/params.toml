@@ -1,0 +1,48 @@
+description = "The official documentation for Keymaker"
+keywords = ["Keymaker", "LLM", "NLP"]
+[app]
+  title = "Keymaker"
+  noFavicon = false
+  svgFavicon = ""
+  iconColor = "#5bbad5"
+  tileColor = "#da532c"
+[search]
+  enable = true
+  type = "fuse"
+  contentLength = 4000
+  placeholder = ""
+  maxResultLength = 10
+  snippetLength = 300
+  highlightTag = "em"
+  absoluteURL = false
+  [search.fuse]
+    # https://fusejs.io/api/options.html
+    isCaseSensitive = false
+    minMatchCharLength = 2
+    findAllMatches = false
+    location = 0
+    threshold = 0.1
+    distance = 100
+    ignoreLocation = true
+    useExtendedSearch = false
+    ignoreFieldNorm = false
+[home]
+  rss = 10
+  [home.profile]
+    enable = true
+    gravatarEmail = ""
+    avatarURL = "/images/Keymaker-logo-small.webp"
+    title = "Keymaker"
+    subtitle = "The most powerful, flexible and extensible way to control the output of large language models."
+    typeit = false
+    social = true
+    disclaimer = ""
+  [home.posts]
+    enable = true
+    paginate = 7
+[social]
+  GitHub = "KnowledgeForge/Keymaker"
+[footer]
+  enable = false
+  custom = ''
+  hugo = false

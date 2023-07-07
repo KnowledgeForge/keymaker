@@ -1,12 +1,12 @@
 <div align="center">
   <a href="https://keymaker.headjack.ai">
-    <img src="https://github.com/KnowledgeForge/keymaker/blob/main/static/keymaker%20logo.png" alt="Logo" width="150">
+    <img src="https://github.com/KnowledgeForge/keymaker/blob/main/docs/assets/images/keymaker%20logo.svg" alt="Logo" width="150">
   </a>
 
   <h3 align="center">KeyMaker</h3>
 
   <p align="center">
-    The most powerful and extensible way to control the output of large language models.
+    The most powerful, flexible and extensible way to control the output of large language models.
     <br />
     <a href="https://keymaker.headjack.ai"><strong>Documentation »</strong></a>
     <br />

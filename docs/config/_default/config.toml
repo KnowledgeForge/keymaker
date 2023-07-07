@@ -1,0 +1,7 @@
+baseURL = ''
+languageCode = 'en-us'
+title = 'Keymaker'
+theme = 'DoIt'
+
+[markup.goldmark.renderer]
+  unsafe = true

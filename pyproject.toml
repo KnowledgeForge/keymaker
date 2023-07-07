@@ -3,13 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.pdm.build]
-includes = ["headjack"]
+includes = ["keymaker"]
 
 
 [project]
 name = "keymaker"
 dynamic = ["version"]
-description = "The most powerful and extensible way to control the output of large language models"
+description = "The most powerful, flexible and extensible way to control the output of large language models."
 authors = [
     {name = "circargs", email = "nick@ouellet.dev"},
     {name = "Nick Ouellet", email = "nick@ouellet.dev"},

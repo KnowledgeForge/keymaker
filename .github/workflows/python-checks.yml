@@ -1,0 +1,41 @@
+name: "Python: Lint, Test, & Coverage"
+on:
+  push:
+    branches:
+    - 'main'
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python: ['3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python }}
+    - uses: pdm-project/setup-pdm@v3
+      name: Install PDM
+      with:
+        python-version: ${{ matrix.python }}
+        architecture: x64
+        prerelease: true
+        enable-pep582: true
+    - name: Install keymaker dependencies
+      run: pdm install
+    - name: Run Linters
+      working-directory: ./
+      run: pdm run pre-commit run --all-files
+    - name: Run Tests and Coverage
+      working-directory: ./
+      run: |
+        pdm run coverage run --source=keymaker/ -m pytest tests/ ${PYTEST_ARGS}
+        pdm run coverage report -m --fail-under=0
+        pdm run coverage html
