@@ -59,23 +59,46 @@ pip install headjack-keymaker
 
 ### Basic Example
 
+First, note that `Prompt`s and `Completion`s are two of the fundamental types in Keymaker.
+
 To use KeyMaker with a language model, you need to first create a `Model` object. For example, to use KeyMaker with Hugging Face's GPT-2 model:
 
 ```python
 from keymaker.models import Huggingface
+from keymaker import Prompt
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model = AutoModelForCausalLM.from_pretrained("gpt2")
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
 hf = Huggingface(model=model, tokenizer=tokenizer)
-```
 
-To generate text without constraints, simply use the `generate` method: 
+prompt: Prompt = Prompt("Hi my name is")
 
-```python
-async for t in hf.generate("Hello, world! ", 10):
-    print(t)
+# prompts are just special strings
+assert prompt == "Hi my name is"
+
+# generate a basic completion with no constraints yet
+# `max_tokens` and `name` are optional
+completed_prompt: Prompt = await prompt.complete(model=hf, max_tokens=1, name="name")
+
+# in assigning to another variable we maintain out original prompt
+assert prompt == "Hi my name is"
+    
+print(completed_prompt)
+# Hi my name is John
+
+# `completed_prompt.completions` is a `Completions` object 
+# and gives access to any strings created from `.complete` calls
+# on its parent `Prompt`. 
+# If the `Completion` was `name`d you can access it as an attribute
+# on the `.completions` with `.` syntax or `['...name...']`
+print(completed_prompt.completions.name)
+# John
+
+# `completed_prompt.completions.name` is a `Completion` object
+# which simply stores the string completion and the start stop indices in the prompt
+print(completed_prompt.completions.name.start, completed_prompt.completions.name.stop)
 ```
 
 This will generate 10 tokens of text starting with "Hello, world! ".

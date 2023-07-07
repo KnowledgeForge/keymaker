@@ -1,5 +1,5 @@
 from .openai import OpenAIChat, OpenAICompletion
-
+from .huggingface import Huggingface
 
 def chatgpt(completion: bool = False, *args, **kwargs):
     if completion:
