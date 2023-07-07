@@ -1,10 +1,12 @@
 """The fundamental components of Keymaker Prompts and Completions"""
-import warnings
-from keymaker.models.base import Model
-from typing import Optional
 import asyncio
+import warnings
+from typing import Optional
+
 from keymaker.constraints.base import Constraint
+from keymaker.models.base import Model
 from keymaker.types import Decoder
+
 
 class Completion(str):
     """A completion string from a prompt
@@ -22,12 +24,13 @@ class Completion(str):
         if isinstance(text, Completion):
             return text
         obj = str.__new__(cls, text)
-        obj.start = start#type: ignore
-        obj.stop = stop#type: ignore
+        obj.start = start  # type: ignore
+        obj.stop = stop  # type: ignore
         return obj
 
     def __repr__(self) -> str:
-        return f"Completion(text = '{self}', start = {self.start}, stop = {self.stop})"#type: ignore
+        return f"Completion(text = '{self}', start = {self.start}, stop = {self.stop})"  # type: ignore
+
 
 class Completions:
     def __init__(self):
@@ -65,9 +68,8 @@ class Completions:
             }
             return combined
         else:
-            raise TypeError(
-                f"unsupported operand type(s) for |: 'Completions' and '{type(other).__name__}'"
-            )
+            raise TypeError(f"unsupported operand type(s) for |: 'Completions' and '{type(other).__name__}'")
+
 
 class Prompt(str):
     """A Prompt is a piece of text a model can generate off of
@@ -83,42 +85,34 @@ class Prompt(str):
         if isinstance(prompt, Completion):
             return prompt
         obj = str.__new__(cls, prompt)
-        obj.prompt = prompt#type: ignore
-        obj.completions = completions or Completions()#type: ignore
+        obj.prompt = prompt  # type: ignore
+        obj.completions = completions or Completions()  # type: ignore
         return obj
 
     def __repr__(self):
-        return f"Prompt('{self.prompt}')"#type: ignore
+        return f"Prompt('{self.prompt}')"  # type: ignore
 
     def __str__(self):
         return self.prompt
 
     def __add__(self, other):
         if isinstance(other, str):
-            return Prompt(self.prompt + other, self.completions)#type: ignore
+            return Prompt(self.prompt + other, self.completions)  # type: ignore
         elif isinstance(other, Prompt):
-            return Prompt(
-                self.prompt + other.prompt, self.completions | other.completions#type: ignore
-            )
+            return Prompt(self.prompt + other.prompt, self.completions | other.completions)  # type: ignore
         else:
-            raise TypeError(
-                f"Cannot concatenate Prompt object with object of type {type(other)}"
-            )
+            raise TypeError(f"Cannot concatenate Prompt object with object of type {type(other)}")
 
     def __radd__(self, other):
         if isinstance(other, str):
-            return Prompt(other + self.prompt, self.completions)#type: ignore
+            return Prompt(other + self.prompt, self.completions)  # type: ignore
         elif isinstance(other, Prompt):
-            return Prompt(
-                other.prompt + self.prompt, self.completions | other.completions#type: ignore
-            )
+            return Prompt(other.prompt + self.prompt, self.completions | other.completions)  # type: ignore
         else:
-            raise TypeError(
-                f"Cannot concatenate object of type {type(other)} with Prompt object"
-            )
+            raise TypeError(f"Cannot concatenate object of type {type(other)} with Prompt object")
 
     def token_length(self, model: Model) -> int:
-        return len(model.encode(self.prompt))#type: ignore
+        return len(model.encode(self.prompt))  # type: ignore
 
     async def complete(
         self,
@@ -131,22 +125,15 @@ class Prompt(str):
         timeout: float = 10.0,
         truncate: bool = False,
     ):
-        text = self.prompt#type: ignore
-        prompt_tokens = model.encode(self.prompt)#type: ignore
-        token_limit = min(
-            max_tokens or float("inf"), model.max_total_tokens - len(prompt_tokens)
-        )
-        if (
-            truncate
-            and (len(prompt_tokens) + (max_tokens or 0)) >= model.max_total_tokens
-        ):
+        text = self.prompt  # type: ignore
+        prompt_tokens = model.encode(self.prompt)  # type: ignore
+        token_limit = min(max_tokens or 1_000_000_000, model.max_total_tokens - len(prompt_tokens))
+        if truncate and (len(prompt_tokens) + (max_tokens or 0)) >= model.max_total_tokens:
             warnings.warn(
                 f"Prompt plus `max_tokens` more than model `max_total_tokens` of {model.max_total_tokens}."
-                "Truncating from right."
+                "Truncating from right.",
             )
-            text = model.decode(
-                prompt_tokens[-(model.max_total_tokens - token_limit) :]
-            )
+            text = model.decode(prompt_tokens[-(model.max_total_tokens - token_limit) :])  # noqa: E203
 
         if max_tokens is not None and max_tokens > token_limit:
             warnings.warn(
@@ -154,13 +141,11 @@ class Prompt(str):
                 f"greater than remaining token limit {token_limit} "
                 f"from model {str(model)[:10]}...) which has "
                 f"`max_total_tokens` {model.max_total_tokens}. "
-                f"will limit `max_tokens` to {token_limit}."
+                f"will limit `max_tokens` to {token_limit}.",
             )
         if constraint is None:
             generated = ""
-            async for tok in model.generate(
-                text, max_tokens=max_tokens, decoder=decoder, timeout=timeout
-            ):
+            async for tok in await model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):
                 if stream_queue:
                     await stream_queue.put(tok)
                 generated += tok
@@ -172,18 +157,11 @@ class Prompt(str):
         partial_completion = ""
         prompt_plus_completion = text[:]
         while token_count < token_limit:
-            selected_token_ids = constraint.constrain_tokens(
-                text, partial_completion, model
-            )
-            selected_token_ids = (
-                None
-                if len(selected_token_ids) > model.vocab_size
-                else selected_token_ids
-            )
+            selected_token_ids = constraint.constrain_tokens(text, partial_completion, model)
+            if selected_token_ids:
+                selected_token_ids = None if len(selected_token_ids) > model.vocab_size else selected_token_ids
             if isinstance(selected_token_ids, set) and len(selected_token_ids) == 0:
-                warnings.warn(
-                    f"Empty token mask encountered with Constraint `{constraint}`. Ending completion."
-                )
+                warnings.warn(f"Empty token mask encountered with Constraint `{constraint}`. Ending completion.")
                 break
             if isinstance(selected_token_ids, str):
                 partial_completion = selected_token_ids
@@ -199,7 +177,7 @@ class Prompt(str):
             if stream_queue:
                 await stream_queue.put(tok)
             partial_completion += generation
-            prompt_plus_completion = self.prompt + partial_completion#type: ignore
+            prompt_plus_completion = self.prompt + partial_completion  # type: ignore
             token_count += 1
         if stream_queue:
             await stream_queue.put(None)
@@ -208,8 +186,8 @@ class Prompt(str):
         ret.completions.add(
             Completion(
                 partial_completion,
-                len(self.prompt),#type: ignore
-                len(self.prompt) + len(partial_completion),#type: ignore
+                len(self.prompt),  # type: ignore
+                len(self.prompt) + len(partial_completion),  # type: ignore
             ),
             name,
         )

@@ -1,20 +1,16 @@
 """Models to use with any openai compatible api endpoints"""
-from tiktoken import Encoding
-import openai
-from keymaker.types import Tokens, Decoder, DecodingStrategy, TokenIds, SelectedTokens
-from keymaker.utils.chat import split_tags
-from typing import (FrozenSet,
-    Optional,
-    AsyncGenerator,
-)
-
-from tiktoken import Encoding
-from dataclasses import dataclass
 import warnings
+from dataclasses import dataclass
+from typing import Any, AsyncGenerator, FrozenSet, Optional
 
 import aiohttp
 import openai
 import tiktoken
+from tiktoken import Encoding
+
+from keymaker.models.base import Model
+from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
+from keymaker.utils.chat import split_tags
 
 
 def openai_tokens(tokenizer: Encoding) -> Tokens:
@@ -25,16 +21,14 @@ def openai_tokens(tokenizer: Encoding) -> Tokens:
     return tokens
 
 
-
-
 @dataclass
 class OpenAIChat(Model):
     model_name: str = "gpt-3.5-turbo"
-    supported_decodings: FrozenSet[DecodingStrategy] = frozenset(
+    supported_decodings: FrozenSet[DecodingStrategy] = frozenset(  # type: ignore
         (
             DecodingStrategy.GREEDY,
             DecodingStrategy.SAMPLE,
-        )
+        ),
     )
     role_tag_start: str = "%"
     role_tag_end: str = "%"
@@ -69,12 +63,10 @@ class OpenAIChat(Model):
         selected_tokens: Optional[SelectedTokens] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[Any, None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
-            raise ValueError(
-                f"Unsupported decoding strategy for {self.__class__} model `{decoder.strategy}`."
-            )
+            raise ValueError(f"Unsupported decoding strategy for {self.__class__} model `{decoder.strategy}`.")
         messages = split_tags(
             text,
             self.role_tag_start,
@@ -91,7 +83,7 @@ class OpenAIChat(Model):
             top_p = 0.01  # select only n tokens to get over .01, should virually always be a single token
             temperature = 0.0
 
-        selected_tokens = selected_tokens or []
+        selected_tokens = selected_tokens or set()
         payload = {
             "messages": messages,
             "logit_bias": {str(token): 100 for token in selected_tokens},
@@ -103,13 +95,11 @@ class OpenAIChat(Model):
 
         async with aiohttp.ClientSession() as session:
             openai.aiosession.set(session)
-            completion_stream = await openai.ChatCompletion.acreate(
-                **payload, stream=True
-            )
+            completion_stream = await openai.ChatCompletion.acreate(**payload, stream=True)
             async for chat_completion in completion_stream:
                 yield chat_completion
 
-    async def generate(
+    async def generate(  # type: ignore
         self,
         text: str,
         max_tokens: int = 1,
@@ -117,23 +107,23 @@ class OpenAIChat(Model):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
     ) -> AsyncGenerator[str, None]:
-        if len(selected_tokens) > self.max_token_selection:
+        if selected_tokens and len(selected_tokens) > self.max_token_selection:
             warnings.warn(
                 f"Trying to mask {len(selected_tokens)} tokens which "
                 f"is more than {self.max_token_selection} mask limit "
                 f"of {self}. Consider stricter constraints. Will select"
-                "lowest token ids up to this limit."
+                "lowest token ids up to this limit.",
             )
-            selected_tokens = list(selected_tokens)[: self.max_token_selection]
+            selected_tokens = list(selected_tokens)[: self.max_token_selection]  # type: ignore
 
         def result_handler(response):
             delta = response["choices"][0]["delta"]
             return (
-                "" if not "content" in delta else delta["content"],  # content
-                "finish_reason" in delta
-                and delta["finish_reason"] is not None,  # complete generation
+                "" if "content" not in delta else delta["content"],  # content
+                "finish_reason" in delta and delta["finish_reason"] is not None,  # complete generation
             )
 
+        eos_token = self.decode([self.eos_token_id])
         error = False
         retries = 0
         for retries in range(self.max_retries):
@@ -149,11 +139,9 @@ class OpenAIChat(Model):
                     retry = retries < self.max_retries
                     retries += 1
                     warnings.warn(
-                        "OpenAI Chat Completion API raised an error: \n"
-                        f"MESSAGE: {message}\n"
-                        f"RETRYING {retries}"
+                        "OpenAI Chat Completion API raised an error: \n" f"MESSAGE: {message}\n" f"RETRYING {retries}"
                         if retry
-                        else ""
+                        else "",
                     )
                     error = True
                     break
@@ -161,6 +149,8 @@ class OpenAIChat(Model):
                     error = False
                     content, done = result_handler(chat_completion)
                     text += content
+                    if content.startswith(eos_token):
+                        break
                     if content:
                         yield content
                     if done:
@@ -168,14 +158,15 @@ class OpenAIChat(Model):
             if not error:
                 break
 
+
 @dataclass
 class OpenAICompletion(Model):
     model_name: str = "text-ada-001"
-    supported_decodings: FrozenSet[DecodingStrategy] = frozenset(
+    supported_decodings: FrozenSet[DecodingStrategy] = frozenset(  # type: ignore
         (
             DecodingStrategy.GREEDY,
             DecodingStrategy.SAMPLE,
-        )
+        ),
     )
     role_tag_start: str = "%"
     role_tag_end: str = "%"
@@ -213,9 +204,7 @@ class OpenAICompletion(Model):
     ) -> AsyncGenerator[str, None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
-            raise ValueError(
-                f"Unsupported decoding strategy for {self.__class__} model `{decoder.strategy}`."
-            )
+            raise ValueError(f"Unsupported decoding strategy for {self.__class__} model `{decoder.strategy}`.")
 
         temperature = decoder.temperature
         top_p = decoder.top_p
@@ -225,7 +214,7 @@ class OpenAICompletion(Model):
             top_p = 0.01  # select only n tokens to get over .01, should virually always be a single token
             temperature = 0.0
 
-        selected_tokens = selected_tokens or []
+        selected_tokens = selected_tokens or set()
         payload = {
             "prompt": text,
             "logit_bias": {str(token): 100 for token in selected_tokens},
@@ -242,31 +231,31 @@ class OpenAICompletion(Model):
             async for completion in completion_stream:
                 yield completion
 
-    async def generate(
+    async def generate(  # type: ignore
         self,
         text: str,
         max_tokens: int = 1,
         selected_tokens: Optional[SelectedTokens] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
-    ) -> AsyncGenerator[str, None]:
-        if len(selected_tokens) > self.max_token_selection:
+    ) -> AsyncGenerator[Any, None]:
+        if selected_tokens and len(selected_tokens) > self.max_token_selection:
             warnings.warn(
                 f"Trying to mask {len(selected_tokens)} tokens which "
                 f"is more than {self.max_token_selection} mask limit "
                 f"of {self}. Consider stricter constraints. Will select"
-                "lowest token ids up to this limit."
+                "lowest token ids up to this limit.",
             )
-            selected_tokens = list(selected_tokens)[: self.max_token_selection]
+            selected_tokens = list(selected_tokens)[: self.max_token_selection]  # type: ignore
 
         def result_handler(response):
             delta = response.choices[0]
             return (
-                "" if not "text" in delta else delta["text"],  # content
-                "finish_reason" in delta
-                and delta["finish_reason"] is not None,  # complete generation
+                "" if "text" not in delta else delta["text"],  # content
+                "finish_reason" in delta and delta["finish_reason"] is not None,  # complete generation
             )
 
+        eos_token = self.decode([self.eos_token_id])
         error = False
         retries = 0
         for retries in range(self.max_retries):
@@ -277,16 +266,14 @@ class OpenAICompletion(Model):
                 decoder=decoder,
                 timeout=timeout,
             ):
-                if "error" in completion.keys():
-                    message = completion["error"]["message"]
+                if "error" in completion.keys():  # type: ignore
+                    message = completion["error"]["message"]  # type: ignore
                     retry = retries < self.max_retries
                     retries += 1
                     warnings.warn(
-                        "OpenAI Completion API raised an error: \n"
-                        f"MESSAGE: {message}\n"
-                        f"RETRYING {retries}"
+                        "OpenAI Completion API raised an error: \n" f"MESSAGE: {message}\n" f"RETRYING {retries}"
                         if retry
-                        else ""
+                        else "",
                     )
                     error = True
                     break
@@ -294,6 +281,8 @@ class OpenAICompletion(Model):
                     error = False
                     content, done = result_handler(completion)
                     text += content
+                    if content.startswith(eos_token):
+                        break
                     if content:
                         yield content
                     if done:

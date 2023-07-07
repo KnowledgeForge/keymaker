@@ -1,10 +1,12 @@
 """Constraints over sets of fixed options"""
-from typing import Set
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from typing import Set
+
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
 from keymaker.types import TokenConstraint
-from concurrent.futures import ThreadPoolExecutor
+
 
 @dataclass
 class OptionsConstraint(Constraint):
@@ -13,22 +15,13 @@ class OptionsConstraint(Constraint):
     """
 
     options: Set[str]
-    short_circuit: bool = (
-        True  # early return when available options based on completed text are <=1
-    )
+    short_circuit: bool = True  # early return when available options based on completed text are <=1
 
-    def _is_valid_token(
-        self, token_id: int, partial_completion: str, model: Model
-    ) -> bool:
+    def _is_valid_token(self, token_id: int, partial_completion: str, model: Model) -> bool:
         decoded_token = model.tokens[token_id]
-        return any(
-            option.startswith(partial_completion + decoded_token)
-            for option in self.options
-        )
+        return any(option.startswith(partial_completion + decoded_token) for option in self.options)
 
-    def constrain_tokens(
-        self, base_text: str, completion_text: str, model: Model
-    ) -> TokenConstraint:
+    def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> TokenConstraint:
         if completion_text in self.options:
             return completion_text
 
@@ -47,11 +40,9 @@ class OptionsConstraint(Constraint):
         with ThreadPoolExecutor():
             valid_token_ids = set(
                 filter(
-                    lambda token_id: self._is_valid_token(
-                        token_id, completion_text, model
-                    ),
+                    lambda token_id: self._is_valid_token(token_id, completion_text, model),
                     model.tokens.keys(),
-                )
+                ),
             )
 
         return valid_token_ids

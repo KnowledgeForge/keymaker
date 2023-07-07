@@ -1,10 +1,11 @@
 """Constraints for regex patterns"""
-from typing import Set
 from dataclasses import dataclass
+
 from keymaker.constraints.base import Constraint
+from keymaker.constraints.regex import RegexConstraint
 from keymaker.models.base import Model
 from keymaker.types import TokenConstraint
-from keymaker.constraints.regex import RegexConstraint
+
 
 @dataclass
 class StopsConstraint(Constraint):
@@ -24,7 +25,5 @@ class StopsConstraint(Constraint):
             end = f"(?={self.stop})"
         self._re_constraint = RegexConstraint(".*?" + end)
 
-    def constrain_tokens(
-        self, base_text: str, completion_text: str, model: Model
-    ) -> TokenConstraint:
+    def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> TokenConstraint:
         return self._re_constraint.constrain_tokens(base_text, completion_text, model)

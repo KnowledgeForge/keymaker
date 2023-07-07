@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://lmql.ai">
-    <img src="https://github.com/KnowledgeForge/keymaker/blob/main/static/keymaker%20logo.jpeg" alt="Logo" width="80" height="80">
+    <img src="https://github.com/KnowledgeForge/keymaker/blob/main/static/keymaker%20logo.png" alt="Logo" width="100" height="100">
   </a>
 
   <h3 align="center">KeyMaker</h3>
@@ -16,4 +16,3 @@
     <br/>
   </p>
 </div>
-

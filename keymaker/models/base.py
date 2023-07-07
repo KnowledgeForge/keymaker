@@ -1,20 +1,18 @@
 """Base model interface"""
-from keymaker.types import DecodingStrategy, Tokens, Decoder, TokenIds
-from typing import (
-    Set,FrozenSet,
-    Optional,
-    ClassVar,
-    AsyncGenerator,
-)
 from abc import ABC, abstractmethod
+from typing import AsyncGenerator, ClassVar, FrozenSet, Optional, Set
+
+from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
+
 
 class Model(ABC):
     """
     A base model from which to derive all models that generate text
     """
+
     tokens: Tokens
-    supported_decodings: ClassVar[FrozenSet[DecodingStrategy]]
     max_total_tokens: int = 512
+    supported_decodings: ClassVar[FrozenSet[DecodingStrategy]]
 
     @abstractmethod
     async def generate(
@@ -55,15 +53,16 @@ class Model(ABC):
         Returns:
             str: The generated text from the language model.
         """
-        return await anext(
-            self.generate(
-                text=text,
-                max_tokens=1,
-                selected_tokens=selected_tokens,
-                decoder=decoder,
-                timeout=timeout,
-            )
+        gen = await self.generate(
+            text=text,
+            max_tokens=1,
+            selected_tokens=selected_tokens,
+            decoder=decoder,
+            timeout=timeout,
         )
+        async for tok in gen:
+            return tok
+        return ""
 
     @abstractmethod
     def encode(self, text: str) -> TokenIds:
