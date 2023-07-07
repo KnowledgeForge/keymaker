@@ -20,6 +20,7 @@
 - [Installation](#installation)
 - [Usage](#usage)
 - [Basic Example](#basic-example)
+- [Accessing Completions](#accessing-completions)
 - [Using Constraints](#using-constraints)  
   - [RegexConstraint](#regexconstraint)
   - [ParserConstraint](#parserconstraint) 
@@ -67,7 +68,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 model = AutoModelForCausalLM.from_pretrained("gpt2")
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
-hf = Huggingface(model=model, tokenizer=tokenizer, chunk_size=3)
+hf = Huggingface(model=model, tokenizer=tokenizer)
 ```
 
 To generate text without constraints, simply use the `generate` method: 
@@ -79,7 +80,7 @@ async for t in hf.generate("Hello, world! ", 10):
 
 This will generate 10 tokens of text starting with "Hello, world! ".
 
-### Accessing Named and Unnamed Completions
+### Accessing Completions
 
 When using KeyMaker to generate text with constraints, you can name the completions to easily access them later. Named completions are stored in the `completions` attribute of a `Prompt` object, while unnamed completions are stored in a list.
 
@@ -309,6 +310,4 @@ Contributions are very welcome. Simply fork the repository and open a pull reque
 
 ## Acknowledgements
 
-Some constraints in KeyMaker are heavily derived from the work of [Matt Rickard ↗](https://github.com/r2d4). Specifically, ReLLM and ParserLLM.
-
-t
+Some constraints in KeyMaker are heavily derived from the work of [Matt Rickard](https://github.com/r2d4). Specifically, ReLLM and ParserLLM.
