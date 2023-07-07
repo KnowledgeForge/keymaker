@@ -1,0 +1,21 @@
+[project]
+name = "keymaker"
+version = "0.1.0"
+description = "The most powerful and extensible way to control the output of large language models"
+authors = [
+    {name = "circargs", email = "nick@ouellet.dev"},
+]
+dependencies = [
+    "regex>=2023.6.3",
+    "transformers>=4.30.2",
+    "tiktoken>=0.4.0",
+    "openai>=0.27.8",
+    "aiohttp>=3.8.4",
+]
+requires-python = ">=3.8"
+readme = "README.md"
+license = {text = "Apache 2.0"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

@@ -1,0 +1,103 @@
+"""Base model interface"""
+from keymaker.types import DecodingStrategy, Tokens, Decoder, TokenIds
+from typing import (
+    Set,FrozenSet,
+    Optional,
+    ClassVar,
+    AsyncGenerator,
+)
+from abc import ABC, abstractmethod
+
+class Model(ABC):
+    """
+    A base model from which to derive all models that generate text
+    """
+    tokens: Tokens
+    supported_decodings: ClassVar[FrozenSet[DecodingStrategy]]
+    max_total_tokens: int = 512
+
+    @abstractmethod
+    async def generate(
+        self,
+        text: str,
+        max_tokens: int = 1,
+        selected_tokens: Optional[Set[int]] = None,
+        decoder: Optional[Decoder] = None,
+        timeout: float = 10.0,
+    ) -> AsyncGenerator[str, None]:
+        """
+        Generate text using the Huggingface model.
+
+        Args:
+            text: The text to generate from.
+            max_length: The maximum length of the generated text.
+            selected_tokens: A set of tokens that should be excluded from the generated text.
+            decoder: A parameterized description of how to select tokens from the distribution
+            timeout: The timeout for the generation process.
+
+        Returns:
+            An iterator of generated text.
+        """
+
+    async def sample(
+        self,
+        text: str,
+        selected_tokens: Optional[SelectedTokens] = None,
+        decoder: Optional[Decoder] = None,
+        timeout: float = 10.0,
+    ) -> str:
+        """Sample from the language model given the input text and the selected tokens to constrain the sampling.
+
+        Args:
+            text (str): The input text to the language model.
+            selected_tokens (Optional[Set[int]]): The set of token ids to constrain the sampling. Defaults to None.
+
+        Returns:
+            str: The generated text from the language model.
+        """
+        return await anext(
+            self.generate(
+                text=text,
+                max_tokens=1,
+                selected_tokens=selected_tokens,
+                decoder=decoder,
+                timeout=timeout,
+            )
+        )
+
+    @abstractmethod
+    def encode(self, text: str) -> TokenIds:
+        """Encode the input text as token ids.
+
+        Args:
+            text (str): The input text to encode.
+
+        Returns:
+            TokenIds: The encoded token ids.
+        """
+
+    @abstractmethod
+    def decode(self, ids: TokenIds) -> str:
+        """Decode the token ids into text.
+
+        Args:
+            ids (TokenIds): The token ids to decode.
+
+        Returns:
+            str: The decoded text.
+        """
+
+    @property
+    def vocab_size(self) -> int:
+        """Get the vocabulary size of the language model."""
+        return len(self.tokens)
+
+    @property
+    @abstractmethod
+    def eos_token_id(self) -> int:
+        """Get the token id of the end of sequence (eos) token."""
+
+    @property
+    @abstractmethod
+    def bos_token_id(self) -> int:
+        """Get the token id of the beginning of sequence (bos) token."""
