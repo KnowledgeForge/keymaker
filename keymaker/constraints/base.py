@@ -15,7 +15,7 @@ class Constraint(ABC):
 
         Args:
             base_text (str): The text to which the completion_text should be appended.
-            completion_text (str): The text to be completed.
+            completion_text (str): The text completed thus far NOTE: could be more than a single token between applications of this method
             model (Model): The language model to be used.
 
         Returns:

@@ -62,6 +62,7 @@ def split_tags(
             raise Exception(f"Unclosed tag `{match_role}`. Found `{match.group('role')}`.")
         messages.append({"role": match_role, "content": content.strip()})
         text = text[match.span("tag")[1] :]  # noqa: E203
+
     return messages
 
 

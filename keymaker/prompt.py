@@ -5,7 +5,7 @@ from typing import Optional
 
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
-from keymaker.types import Decoder
+from keymaker.types import Decoder, Stream
 
 
 class Completion(str):
@@ -124,7 +124,7 @@ class Prompt(str):
         name: Optional[str] = None,
         max_tokens: Optional[int] = None,
         decoder: Optional[Decoder] = None,
-        stream_queue: Optional[asyncio.Queue] = None,
+        stream: Optional[Stream[Optional[Completion]]] = None,
         timeout: float = 10.0,
         truncate: bool = False,
     ):
@@ -150,8 +150,8 @@ class Prompt(str):
         if constraint is None:
             generated = ""
             async for tok in model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):
-                if stream_queue:
-                    await stream_queue.put(Completion(
+                if stream:
+                    await stream.put(Completion(
                             tok,
                             len(self.prompt)+len(generated),  # type: ignore
                             len(self.prompt) + len(generated)+len(tok),  # type: ignore
@@ -160,8 +160,8 @@ class Prompt(str):
                         )
                     )
                 generated += tok
-            if stream_queue:
-                await stream_queue.put(None)
+            if stream:
+                await stream.put(None)
             ret = self + generated
             ret.completions.add(# type: ignore
                         Completion(
@@ -177,6 +177,7 @@ class Prompt(str):
         token_count = 0
         partial_completion = ""
         prompt_plus_completion = text[:]
+        gen_tokens = []
         while token_count < token_limit:
             selected_token_ids = constraint.constrain_tokens(text, partial_completion, model)
             if selected_token_ids:
@@ -197,25 +198,39 @@ class Prompt(str):
                     decoder=decoder,
                     timeout=timeout,
                 )
-            if model.encode(generation)[-1] == model.eos_token_id:
+                
+            gen_tokens = model.encode(generation)
+            valid_tokens = gen_tokens
+            # in case sampling gave us extra tokens (e.g. sample chunk size of the model is more than 1 like for openai chat models)
+            if len(gen_tokens)>1 and selected_token_ids:
+                valid_tokens = []
+                for tok in gen_tokens:
+                    if tok not in selected_token_ids:
+                        break
+                    valid_tokens.append(tok)
+                
+            if  model.eos_token_id in valid_tokens:
                 break
-            if stream_queue:
-                await stream_queue.put(Completion(
-                        tok,
+            
+            valid_generation = model.decode(valid_tokens)
+            
+            if stream:
+                await stream.put(Completion(
+                        valid_generation,
                         len(self.prompt)+len(partial_completion),  # type: ignore
-                        len(self.prompt) + len(partial_completion)+len(tok),  # type: ignore
+                        len(self.prompt) + len(partial_completion)+len(valid_generation),  # type: ignore
                         name,
                         True
                     )
                 )
-            partial_completion += generation
-            prompt_plus_completion = self.prompt + partial_completion  # type: ignore
-            token_count += 1
-        if stream_queue:
-            await stream_queue.put(None)
+            partial_completion += valid_generation
+            token_count += len(valid_tokens)
+            
+        if stream:
+            await stream.put(None)
 
         ret = self + partial_completion
-        ret.completions.add(
+        ret.completions.add(#type: ignore
             Completion(
                 partial_completion,
                 len(self.prompt),  # type: ignore

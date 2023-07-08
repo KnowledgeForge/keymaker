@@ -1,7 +1,7 @@
 '''Common types used throughout keymaker'''
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Set, Union
+from typing import Dict, List, Set, Union, Protocol, TypeVar
 
 
 class DecodingStrategy(str, Enum):
@@ -21,3 +21,9 @@ Tokens = Dict[int, str]
 TokenDistribution = Dict[str, int]
 SelectedTokens = Set[int]
 TokenConstraint = Union[None, SelectedTokens, str]
+
+T = TypeVar("T")
+
+class Stream(Protocol[T]):
+    async def put(self, item: T) -> None:
+        pass

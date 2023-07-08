@@ -295,22 +295,22 @@ This will generate text containing one of the options, e.g. "I would like a appl
 `StopsConstraint` allows you to constrain the generated text by stopping at a specified string. For example, to generate text that stops after the word "stop":
 
 ```python
-from keymaker.constraints import StopsConstraint
+constraint = StopsConstraint(stop="!")
 
-stop = "stop"
-constraint = StopsConstraint(stop=stop, include=True)
-```
+prompt = Prompt(
+    """
+%system%You are an agent that says short phrases%/system%
+%user%Be very excited with your punctuation and give me a short phrase about dogs.%/user%
+"""
+)
 
-To apply this constraint, pass it to the `complete` method:  
 
-```python
-prompt = Prompt("Keep going until you ")
-prompt = await prompt.complete(model=hf, constraint=constraint, name="stop")
+prompt = await prompt.complete(model=chat_model, constraint=constraint, name="stop")
 print(prompt)
+# %system%You are an agent that says short phrases%/system%
+# %user%Be very excited with your punctuation and give me a short phrase about dogs.%/user%
+# "Dogs are absolutely pawsome!"
 ```
-
-This will generate text stopping at the word "stop", e.g. 
-"Keep going until you stop".
 
 ### Combining Constraints  
 
@@ -369,7 +369,7 @@ class CustomModel(Model):
         # Implement the logic for decoding token ids as text
         pass  
 
-    # Optionally, implement other required properties and methods
+    # ...
 ```  
 
 You can then use your custom model with KeyMaker as you would with the built-in models:

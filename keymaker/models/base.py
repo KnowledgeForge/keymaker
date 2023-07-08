@@ -13,7 +13,8 @@ class Model(ABC):
     tokens: Tokens
     max_total_tokens: int = 512
     supported_decodings: ClassVar[FrozenSet[DecodingStrategy]]
-
+    sample_chunk_size: int = 1
+    
     @abstractmethod
     async def generate(
         self,
@@ -55,14 +56,15 @@ class Model(ABC):
         """
         gen = self.generate(
             text=text,
-            max_tokens=1,
+            max_tokens=self.sample_chunk_size,
             selected_tokens=selected_tokens,
             decoder=decoder,
             timeout=timeout,
         )
+        ret = ""
         async for tok in gen:
-            return tok
-        return ""
+            ret+= tok
+        return ret
 
     @abstractmethod
     def encode(self, text: str) -> TokenIds:
