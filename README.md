@@ -213,6 +213,13 @@ OpenAI Models can be accessed similarly:
 from keymaker.models import OpenAIChat, OpenAICompletion #e.g. chatgpt/gpt4, text-davinci-003 respectively
 ```
 
+There are aliases for common models:
+```python
+from keymaker.models import chatgpt, gpt4
+
+chat_model=gpt4(...optional configurations for underlying `OpenAIChat` otherwise use defaults)
+```
+
 #### COMING SOON
 There are a number of libraries that mimic the OpenAI API
 
