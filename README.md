@@ -32,6 +32,7 @@
   - [OptionsConstraint](#optionsconstraint)
   - [StopsConstraint](#stopsconstraint)
 - [Combining Constraints](#combining-constraints)
+- [Streaming Completions](#streaming-completions)
 - [Creating Custom Models](#creating-custom-models)
 - [Creating Custom Constraints](#creating-custom-constraints)  
 - [Contributing](#contributing)
@@ -388,6 +389,23 @@ prompt = (await prompt.complete(model=chat_model, constraint=combined_constraint
 
 print(prompt)
 # Whenever I see a basketball, it reminds me of my favorite fruit the orange.
+```
+
+### Streaming Completions
+
+KeyMaker provides a very slim and intuitive means to access completion generation as it happens.
+
+Simply pass a prompt `complete` your stream object which has a method `async def put` like so
+
+```python
+class MyStream:
+    async def put(self, item):
+        ...
+my_stream = MyStream()
+
+prompt = Prompt(...)
+
+await prompt.complete(..., stream = my_stream)
 ```
 
 ### Creating Custom Models  
