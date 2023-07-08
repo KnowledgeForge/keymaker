@@ -1,8 +1,9 @@
-from typing import Dict, FrozenSet, List
+from typing import Dict, FrozenSet, List, TYPE_CHECKING
 
 import regex as re
 
-from keymaker.prompt import Prompt
+if TYPE_CHECKING:
+    from keymaker import Prompt
 
 
 def split_tags(
@@ -65,7 +66,7 @@ def split_tags(
 
 
 def strip_tags(
-    prompt: Prompt,
+    prompt: "Prompt",
     tag_start: str = "%",
     tag_end: str = "%",
     roles_seps: Dict[str, str] = {
@@ -74,7 +75,8 @@ def strip_tags(
         "assistant": "Assistant: ",
     },
     sep: str = "\n",
-) -> Prompt:
+) -> "Prompt":
+    from keymaker import Prompt
     messages = split_tags(text=prompt, tag_start=tag_start, tag_end=tag_end, roles=frozenset(roles_seps.keys()))
     return Prompt(
         sep.join((roles_seps[message["role"]] + message["content"] for message in messages)),

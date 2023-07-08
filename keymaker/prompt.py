@@ -15,17 +15,20 @@ class Completion(str):
         text (str): the generated string
         start (int): the start index of the completion in the prompt it came from
         stop (int): the stop index of the completion in the prompt it came from
+        chunk (bool): whether the completion is part of a larger whole
 
     Returns:
         Completion (str)
     """
 
-    def __new__(cls, text: str, start: int, stop: int):
+    def __new__(cls, text: str, start: int, stop: int, name: Optional[str] = None, chunk: bool = False):
         if isinstance(text, Completion):
             return text
         obj = str.__new__(cls, text)
         obj.start = start  # type: ignore
         obj.stop = stop  # type: ignore
+        obj.chunk = chunk  # type: ignore
+        obj.name = name #type: ignore
         return obj
 
     def __repr__(self) -> str:
@@ -143,15 +146,33 @@ class Prompt(str):
                 f"`max_total_tokens` {model.max_total_tokens}. "
                 f"will limit `max_tokens` to {token_limit}.",
             )
+        
         if constraint is None:
             generated = ""
-            async for tok in await model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):
+            async for tok in model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):
                 if stream_queue:
-                    await stream_queue.put(tok)
+                    await stream_queue.put(Completion(
+                            tok,
+                            len(self.prompt)+len(generated),  # type: ignore
+                            len(self.prompt) + len(generated)+len(tok),  # type: ignore
+                            name,
+                            True
+                        )
+                    )
                 generated += tok
             if stream_queue:
                 await stream_queue.put(None)
-            return self + generated
+            ret = self + generated
+            ret.completions.add(# type: ignore
+                        Completion(
+                            generated,
+                            len(self.prompt),  # type: ignore
+                            len(self.prompt) + len(generated),  # type: ignore
+                            name
+                        ),
+                        name,
+                    )
+            return ret
 
         token_count = 0
         partial_completion = ""
@@ -175,7 +196,14 @@ class Prompt(str):
             if model.encode(generation)[-1] == model.eos_token_id:
                 break
             if stream_queue:
-                await stream_queue.put(tok)
+                await stream_queue.put(Completion(
+                        tok,
+                        len(self.prompt)+len(partial_completion),  # type: ignore
+                        len(self.prompt) + len(partial_completion)+len(tok),  # type: ignore
+                        name,
+                        True
+                    )
+                )
             partial_completion += generation
             prompt_plus_completion = self.prompt + partial_completion  # type: ignore
             token_count += 1
@@ -188,6 +216,7 @@ class Prompt(str):
                 partial_completion,
                 len(self.prompt),  # type: ignore
                 len(self.prompt) + len(partial_completion),  # type: ignore
+                name
             ),
             name,
         )

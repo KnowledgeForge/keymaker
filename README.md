@@ -21,6 +21,9 @@
 - [Usage](#usage)
 - [Basic Example](#basic-example)
 - [Accessing Completions](#accessing-completions)
+- [Model Options](#model-options)
+  - [Huggingface (Direct)](#huggingface-direct)
+  - [OpenAI](#openai)
 - [Using Constraints](#using-constraints)  
   - [RegexConstraint](#regexconstraint)
   - [ParserConstraint](#parserconstraint) 
@@ -63,65 +66,115 @@ First, note that `Prompt`s and `Completion`s are two of the fundamental types in
 
 To use KeyMaker with a language model, you need to first create a `Model` object. For example, to use KeyMaker with Hugging Face's GPT-2 model:
 
+
+Sure! Here's the code split into separate code blocks with the comments as regular text in between:
+
+Some basic imports
 ```python
 from keymaker.models import Huggingface
 from keymaker import Prompt
 from transformers import AutoModelForCausalLM, AutoTokenizer
+```
 
+For demo purposes, we can use a local Huggingface model
+```python
 model = AutoModelForCausalLM.from_pretrained("gpt2")
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
 hf = Huggingface(model=model, tokenizer=tokenizer)
-
-prompt: Prompt = Prompt("Hi my name is")
-
-# prompts are just special strings
-assert prompt == "Hi my name is"
-
-# generate a basic completion with no constraints yet
-# `max_tokens` and `name` are optional
-completed_prompt: Prompt = await prompt.complete(model=hf, max_tokens=1, name="name")
-
-# in assigning to another variable we maintain out original prompt
-assert prompt == "Hi my name is"
-    
-print(completed_prompt)
-# Hi my name is John
-
-# `completed_prompt.completions` is a `Completions` object 
-# and gives access to any strings created from `.complete` calls
-# on its parent `Prompt`. 
-# If the `Completion` was `name`d you can access it as an attribute
-# on the `.completions` with `.` syntax or `['...name...']`
-print(completed_prompt.completions.name)
-# John
-
-# `completed_prompt.completions.name` is a `Completion` object
-# which simply stores the string completion and the start stop indices in the prompt
-print(completed_prompt.completions.name.start, completed_prompt.completions.name.stop)
 ```
 
-This will generate 10 tokens of text starting with "Hello, world! ".
+create a prompt using the Prompt class
+```python
+prompt: Prompt = Prompt("Dogs are known for their")
+```
+
+`Prompt`s are interchangeable with strings
+```python
+>>> prompt == "Dogs are known for their"
+True
+```
+
+generate a basic completion with no constraints
+`max_tokens` and `name` are optional
+```python
+completed_prompt: Prompt = await prompt.complete(
+    model=hf, max_tokens=1, name="dog_ability"
+)
+```
+
+check that the original prompt is still the same
+```
+>>> prompt == "Dogs are known for their"
+True
+```
+
+print out the completed prompt string
+```python
+>>> print(completed_prompt)
+Dogs are known for their ability
+```
+
+`completed_prompt.completions` is a `Completions` object
+and gives access to any strings created from `.complete` calls
+on its parent `Prompt`.
+If the `Completion` was `name`d you can access it as an attribute
+on the `.completions` with `.` syntax or `['...name...']`
+
+```python
+>>> print(completed_prompt.completions.dog_ability)
+ ability
+```
+
+
+`completed_prompt.completions.name` is a `Completion` object
+which simply stores the string completion and the start stop indices in the prompt
+```python
+>>> print(
+    completed_prompt[
+        completed_prompt.completions.dog_ability.start : completed_prompt.completions[
+            "dog_ability"
+        ].stop
+    ]
+)
+ ability
+```
+
+print out the Completions object for the completed prompt
+```python
+>>> completed_prompt.completions
+Completions([], {'dog_ability': Completion(text = ' ability', start = 24, stop = 32)})
+```
 
 ### Accessing Completions
 
-When using KeyMaker to generate text with constraints, you can name the completions to easily access them later. Named completions are stored in the `completions` attribute of a `Prompt` object, while unnamed completions are stored in a list.
+When using KeyMaker to generate text with constraints, you can name the completions to easily access them later. 
+All completions are stored in the `completions` attribute of a `Prompt` object.
 
 Here's an example of how to access both named and unnamed completions:
 
 ```python
+from keymaker.models import chatgpt
 from keymaker import Prompt
-from keymaker.constraints import RegexConstraint
+import openai
+
+openai.api_key = "sk-"
+
+chat_model = chatgpt()
 
 prompt = Prompt("The weather is ")
 
 # Generate an unnamed completion
 constraint1 = RegexConstraint(pattern=r"sunny|rainy|cloudy")
-prompt = await prompt.complete(model=your_model, constraint=constraint1)
+prompt = await prompt.complete(model=chat_model, constraint=constraint1)
 
 # Generate a named completion
 constraint2 = RegexConstraint(pattern=r" and (cold|warm|hot)")
-prompt = await prompt.complete(model=your_model, constraint=constraint2, name="temperature")
+prompt = await prompt.complete(
+    model=chat_model, constraint=constraint2, name="temperature"
+)
+
+print(prompt)
 
 # Access the unnamed completion
 unnamed_completion = prompt.completions[0]
@@ -131,16 +184,51 @@ print(f"Unnamed completion: {unnamed_completion}")
 named_completion = prompt.completions.temperature
 print(f"Named completion: {named_completion}")
 ```
+Output:
+```
+The weather is sunny and warm
+Unnamed completion: sunny
+Named completion:  and warm
+```
 
 In the example, we create a `Prompt` object with the text "The weather is ". We then generate an unnamed completion with a `RegexConstraint` that matches the words "sunny", "rainy", or "cloudy", and a named completion with a `RegexConstraint` that matches " and " followed by "cold", "warm", or "hot". 
 
 We access the unnamed completion by indexing the `completions` attribute of the `Prompt` object, and the named completion by using the `name` as an attribute of the `completions` attribute.
 
+### Model Options
+As it stands, the models available for use out of the box are `Huggingface` models and APIs implementing the OpenAI spec.
+
+KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Model](#creating-custom-models)
+
+#### Huggingface (direct)
+To use Huggingface models directly, simply import the `Huggingface` `Model` class:
+```python
+from keymaker.models import Huggingface
+```
+
+#### OpenAI
+OpenAI Models can be accessed similarly:
+```python
+from keymaker.models import OpenAIChat, OpenAICompletion #e.g. chatgpt/gpt4, text-davinci-003 respectively
+```
+
+#### COMING SOON
+There are a number of libraries that mimic the OpenAI API
+
+#### Llama-CPP
+See [Llama-Cpp-Python](https://abetlen.github.io/llama-cpp-python/#web-server)
+
+#### Huggingface (API) via vLLM
+See [vLLM](https://vllm.readthedocs.io/en/latest/getting_started/quickstart.html#openai-compatible-server)
+
+
 ### Using Constraints  
 
-KeyMaker provides several constraints that can be applied to the generated text. Let's go through some of the constraint types and how to use them.
+KeyMaker provides several constraints as well as that can be applied to the generated text. Let's go through some of the constraint types and how to use them.
 
-#### RegexConstraint  
+KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Constraint](#creating-custom-constraints)  
+
+#### RegexConstraint
 
 `RegexConstraint` allows you to constrain the generated text based on a regex pattern. For example, to generate text that starts with "Hello":
 
@@ -231,22 +319,20 @@ This will generate text stopping at the word "stop", e.g.
 
 KeyMaker also allows you to combine multiple constraints using logical operators like `AndConstraint`, `OrConstraint`, and `NotConstraint`. 
 
-For example, to generate text that starts with "Hello" and contains one of the specified options:
 ```python
-from keymaker.constraints import AndConstraint, RegexConstraint, OptionsConstraint
+from keymaker.constraints import OrConstraint, RegexConstraint, OptionsConstraint
 
-regex_constraint = RegexConstraint(pattern=r"Hello.*")
+regex_constraint = RegexConstraint(pattern=r"peanut")
 options_constraint = OptionsConstraint(options={"apple", "banana", "orange"})
 
-combined_constraint = AndConstraint([regex_constraint, options_constraint])
-```
+combined_constraint = OrConstraint([regex_constraint, options_constraint])
 
-To apply the combined constraint, pass it to the `complete` method:
+prompt = Prompt("Whenever I see a basketball, it reminds me of my favorite fruit the ")
 
-```python
-prompt = Prompt("Hello, I have a ")
-prompt = await prompt.complete(model=hf, constraint=combined_constraint, name="fruit") 
+prompt = (await prompt.complete(model=chat_model, constraint=combined_constraint)) + "."
+
 print(prompt)
+#Prompt('Whenever I see a basketball, it reminds me of my favorite fruit the orange.')
 ```
 
 This will generate text starting with "Hello, I have a " and containing one of the options, e.g.

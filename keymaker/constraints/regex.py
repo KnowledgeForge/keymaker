@@ -22,6 +22,7 @@ class RegexConstraint(Constraint):
     """
 
     pattern: Union[str, re.Pattern[str]]
+    terminate_on_match: bool = True
 
     def __post_init__(self):
         self._pattern: re.Pattern[str] = re.compile(self.pattern) if isinstance(self.pattern, str) else self.pattern
@@ -31,9 +32,10 @@ class RegexConstraint(Constraint):
         return self._pattern.fullmatch(partial_completion + decoded_token, partial=True)
 
     def constrain_tokens(self, base_text: str, completion_text: str, model: "Model") -> TokenConstraint:
-        m = self._pattern.match(completion_text)
-        if m and m.start() == 0:
-            return completion_text
+        if self.terminate_on_match:
+            m = self._pattern.match(completion_text)
+            if m and m.start() == 0:
+                return completion_text
 
         with ThreadPoolExecutor():
             valid_token_ids = set(

@@ -53,7 +53,7 @@ class Model(ABC):
         Returns:
             str: The generated text from the language model.
         """
-        gen = await self.generate(
+        gen = self.generate(
             text=text,
             max_tokens=1,
             selected_tokens=selected_tokens,
