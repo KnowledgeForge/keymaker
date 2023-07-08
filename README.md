@@ -66,9 +66,6 @@ First, note that `Prompt`s and `Completion`s are two of the fundamental types in
 
 To use KeyMaker with a language model, you need to first create a `Model` object. For example, to use KeyMaker with Hugging Face's GPT-2 model:
 
-
-Sure! Here's the code split into separate code blocks with the comments as regular text in between:
-
 Some basic imports
 ```python
 from keymaker.models import Huggingface
