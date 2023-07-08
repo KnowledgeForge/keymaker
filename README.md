@@ -294,7 +294,7 @@ Let's go through some of the built-in constraint types and how to use them.
 
 #### RegexConstraint
 
-`RegexConstraint` allows you to constrain the generated text based on a regex pattern. For example, to generate text that starts with "Hello":
+`RegexConstraint` allows you to constrain the generated text based on a regex pattern.
 
 ```python
 from keymaker.constraints import RegexConstraint
@@ -305,8 +305,6 @@ prompt = await Prompt("Hello, ").complete(model=chat_model, constraint=constrain
 print(prompt)
 # Hello, I could eat 8 burgers.
 ```
-
-This will generate text starting with "Hello, " that matches the regex pattern.
 
 #### ParserConstraint  
 
@@ -330,8 +328,6 @@ prompt = await prompt.complete(model=hf, constraint=constraint, name="grammar")
 print(prompt) 
 ```
 
-This will generate the text "A B C" to match the grammar.
-
 #### OptionsConstraint  
 
 `OptionsConstraint` allows you to constrain the generated text based on a list of string options. For example, to generate text that contains one of the following options:
@@ -346,12 +342,11 @@ constraint = OptionsConstraint(options=options)
 To apply this constraint, pass it to the `complete` method:  
 
 ```python  
-prompt = Prompt("I would like a ") 
+prompt = Prompt("I would like an ") 
 prompt = await prompt.complete(model=hf, constraint=constraint, name="fruit")
 print(prompt)
+# I would like an apple
 ```
-
-This will generate text containing one of the options, e.g. "I would like a apple".
 
 #### StopsConstraint  
 
@@ -392,11 +387,8 @@ prompt = Prompt("Whenever I see a basketball, it reminds me of my favorite fruit
 prompt = (await prompt.complete(model=chat_model, constraint=combined_constraint)) + "."
 
 print(prompt)
-#Prompt('Whenever I see a basketball, it reminds me of my favorite fruit the orange.')
+# Whenever I see a basketball, it reminds me of my favorite fruit the orange.
 ```
-
-This will generate text starting with "Hello, I have a " and containing one of the options, e.g.
-"Hello, I have a apple".
 
 ### Creating Custom Models  
 

@@ -113,6 +113,7 @@ class OpenAIChat(Model):
         timeout: float = 10.0,
     ) -> AsyncGenerator[str, None]:
         bias = 100
+        # if there are more tokens to keep than ignore, invert the bias
         if selected_tokens and len(selected_tokens) > (self.vocab_size/2):
             selected_tokens = self._all_token_ids - selected_tokens
             bias = -100
