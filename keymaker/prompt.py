@@ -184,15 +184,19 @@ class Prompt(str):
             if isinstance(selected_token_ids, set) and len(selected_token_ids) == 0:
                 warnings.warn(f"Empty token mask encountered with Constraint `{constraint}`. Ending completion.")
                 break
+
             if isinstance(selected_token_ids, str):
                 partial_completion = selected_token_ids
                 break
-            generation = await model.sample(
-                prompt_plus_completion,
-                selected_tokens=selected_token_ids,
-                decoder=decoder,
-                timeout=timeout,
-            )
+            if isinstance(selected_token_ids, set) and len(selected_token_ids) == 1:
+                generation = model.decode(list(selected_token_ids))
+            else:
+                generation = await model.sample(
+                    prompt_plus_completion,
+                    selected_tokens=selected_token_ids,
+                    decoder=decoder,
+                    timeout=timeout,
+                )
             if model.encode(generation)[-1] == model.eos_token_id:
                 break
             if stream_queue:

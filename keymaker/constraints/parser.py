@@ -68,7 +68,7 @@ class ParserConstraint(Constraint):
             return completion_text
 
         regex_constraints = [RegexConstraint(self.terminal_regexes[t]) for t in valid_next_lex] + [
-            re.compile(model.decode([model.eos_token_id])),
+            RegexConstraint(model.decode([model.eos_token_id])),
         ]
 
         constraint = OrConstraint(regex_constraints)
