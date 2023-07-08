@@ -42,7 +42,7 @@
 ## About KeyMaker  
 
 KeyMaker is a Python library that provides a powerful, flexible, and extensible way 
-to control the output of large language models like OpenAI GPT-3 and Hugging Face's Transformers. 
+to control the output of large language models like OpenAI API-based models and Hugging Face's Transformers. 
 It allows you to create and apply constraints on the generated tokens, ensuring that 
 the output of the model meets specific requirements or follows a desired format.
 
