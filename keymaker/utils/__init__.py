@@ -1,0 +1,1 @@
+from .chat import strip_tags

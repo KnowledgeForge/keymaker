@@ -24,6 +24,8 @@
 - [Model Options](#model-options)
   - [Huggingface (Direct)](#huggingface-direct)
   - [OpenAI](#openai)
+- [Using Chat models](#using-chat-models)
+  - [Mixing Chat and Non-Chat Models](#mixing-chat-and-non-chat-models)
 - [Using Constraints](#using-constraints)  
   - [RegexConstraint](#regexconstraint)
   - [ParserConstraint](#parserconstraint) 
@@ -34,6 +36,8 @@
 - [Creating Custom Constraints](#creating-custom-constraints)  
 - [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
+- [Disclaimer](#disclaimer)
+- [Copyright](#copyright)
 
 ## About KeyMaker  
 
@@ -218,12 +222,68 @@ See [Llama-Cpp-Python](https://abetlen.github.io/llama-cpp-python/#web-server)
 #### Huggingface (API) via vLLM
 See [vLLM](https://vllm.readthedocs.io/en/latest/getting_started/quickstart.html#openai-compatible-server)
 
+### Using Chat models
+
+KeyMaker provides functionality for using roles with chat models. While this is optional, lack of usage could potentially impact performance.
+
+Chat models (e.g. `OpenAIChat` or the aliases `chatgpt`, `gpt`) have the following default attributes (which can vary should you [Add Your Own Model](#creating-custom-models))
+```python
+    role_tag_start = "%"
+    role_tag_end = "%"
+    default_role = "assistant"
+    allowed_roles = ("system", "user", "assistant")
+```
+
+This affects the way your prompt will be seen by the chat model. For example:
+```python
+prompt = Prompt(
+    """
+%system%You are an agent that says short phrases%/system%
+%user%Be very excited with your punctuation and give me a short phrase about dogs.%/user%
+"Dogs are absolutely pawsome!"
+"""
+)
+```
+would be seen by the chat model as:
+```python
+[{'role': 'system', 'content': 'You are an agent that says short phrases'},
+ {'role': 'user',
+  'content': 'Be very excited with your punctuation and give me a short phrase about dogs.'},
+ {'role': 'assistant', 'content': '"Dogs are absolutely pawsome!"'}]
+```
+
+#### Mixing Chat and Non-Chat Models
+
+Further, should you want to intermingle the usage of chat and non-chat continuations, KeyMaker provides utilities to do so:
+```python
+from keymaker.utils import strip_tags
+
+prompt = Prompt(
+    """
+%system%You are an agent that says short phrases%/system%
+%user%Be very excited with your punctuation and give me a short phrase about dogs.%/user%
+"Dogs are absolutely pawsome!"
+"""
+)
+
+regular_prompt = strip_tags(prompt, roles_seps = {'system': '', 'user': 'User: ', 'assistant': 'Assistant: '},)
+>>> regular_prompt
+```
+Result:
+```python
+Prompt('You are an agent that says short phrases
+User: Be very excited with your punctuation and give me a short phrase about dogs.
+Assistant: "Dogs are absolutely pawsome!"')
+```
+
 
 ### Using Constraints  
 
-KeyMaker provides several constraints as well as that can be applied to the generated text. Let's go through some of the constraint types and how to use them.
+KeyMaker provides several out-of-the-box constraints that can be applied when completing prompts.
 
 KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Constraint](#creating-custom-constraints)  
+
+Let's go through some of the built-in constraint types and how to use them.
 
 #### RegexConstraint
 
@@ -232,15 +292,11 @@ KeyMaker is also designed to make it as simple as possible for you to [Add Your 
 ```python
 from keymaker.constraints import RegexConstraint
 
-constraint = RegexConstraint(pattern=r"Hello.*")
-```
+constraint = RegexConstraint(pattern=r"I (would|could) eat [0-9]{1, 2} burgers\.")
 
-To apply this constraint, pass it to the `complete` method:
-
-```python
-prompt = Prompt("Hello, ")
-prompt = await prompt.complete(model=hf, constraint=constraint, name="greeting")
+prompt = await Prompt("Hello, ").complete(model=chat_model, constraint=constraint, name="greeting")
 print(prompt)
+# Hello, I could eat 8 burgers.
 ```
 
 This will generate text starting with "Hello, " that matches the regex pattern.
@@ -417,3 +473,10 @@ Contributions are very welcome. Simply fork the repository and open a pull reque
 ## Acknowledgements
 
 Some constraints in KeyMaker are heavily derived from the work of [Matt Rickard](https://github.com/r2d4). Specifically, ReLLM and ParserLLM.
+
+## Disclaimer
+
+KeyMaker and its contributors bear no responsibility for any harm done by its usage either directly or indirectly including but not limited to costs incurred by using the package (KeyMaker) with LLM vendors. The package is provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+
+## Copyright
+Copyright 2023- Nick Ouellet (nick@ouellet.dev)
