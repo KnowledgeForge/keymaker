@@ -398,15 +398,24 @@ KeyMaker provides a very slim and intuitive means to access completion generatio
 Simply pass a prompt `complete` your stream object which has a method `async def put` like so
 
 ```python
+from keymaker import Completion
+
 class MyStream:
-    async def put(self, item):
+    async def put(self, item: Completion):
         ...
+
 my_stream = MyStream()
 
 prompt = Prompt(...)
 
 await prompt.complete(..., stream = my_stream)
 ```
+
+Your stream object will receive the delta `Completion`s as they occur and you can manipulate and forward them as you please.
+
+A common object implementing this streaming interface is `asyncio.Queue`.
+
+
 
 ### Creating Custom Models  
 
