@@ -221,13 +221,12 @@ from keymaker.models import chatgpt, gpt4
 chat_model=gpt4(...optional configurations for underlying `OpenAIChat` otherwise use defaults)
 ```
 
-#### COMING SOON
-There are a number of libraries that mimic the OpenAI API
-
 #### Llama-CPP
+**coming soon**
 See [Llama-Cpp-Python](https://abetlen.github.io/llama-cpp-python/#web-server)
 
 #### Huggingface (API) via vLLM
+**untested - ripe for contribution**
 See [vLLM](https://vllm.readthedocs.io/en/latest/getting_started/quickstart.html#openai-compatible-server)
 
 ### Using Chat models
