@@ -1,6 +1,6 @@
 """Base model interface"""
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, ClassVar, FrozenSet, Optional, Set
+from typing import AsyncGenerator, Callable, ClassVar, FrozenSet, Optional, Set
 
 from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
 

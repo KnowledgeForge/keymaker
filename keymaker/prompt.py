@@ -1,11 +1,11 @@
 """The fundamental components of Keymaker Prompts and Completions"""
 import asyncio
 import warnings
-from typing import Optional
+from typing import Optional, Awaitable, Callable, Any
 
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
-from keymaker.types import Decoder, Stream
+from keymaker.types import Decoder
 
 
 class Completion(str):
@@ -124,7 +124,7 @@ class Prompt(str):
         name: Optional[str] = None,
         max_tokens: Optional[int] = None,
         decoder: Optional[Decoder] = None,
-        stream: Optional[Stream[Optional[Completion]]] = None,
+        stream: Optional[Callable[[Optional[Completion]], Awaitable[Any]]] = None,
         timeout: float = 10.0,
         truncate: bool = False,
     ):
@@ -151,7 +151,7 @@ class Prompt(str):
             generated = ""
             async for tok in model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):
                 if stream:
-                    await stream.put(Completion(
+                    await stream(Completion(
                             tok,
                             len(self.prompt)+len(generated),  # type: ignore
                             len(self.prompt) + len(generated)+len(tok),  # type: ignore
@@ -161,7 +161,7 @@ class Prompt(str):
                     )
                 generated += tok
             if stream:
-                await stream.put(None)
+                await stream(None)
             ret = self + generated
             ret.completions.add(# type: ignore
                         Completion(
@@ -215,7 +215,7 @@ class Prompt(str):
             valid_generation = model.decode(valid_tokens)
             
             if stream:
-                await stream.put(Completion(
+                await stream(Completion(
                         valid_generation,
                         len(self.prompt)+len(partial_completion),  # type: ignore
                         len(self.prompt) + len(partial_completion)+len(valid_generation),  # type: ignore
@@ -227,7 +227,7 @@ class Prompt(str):
             token_count += len(valid_tokens)
             
         if stream:
-            await stream.put(None)
+            await stream(None)
 
         ret = self + partial_completion
         ret.completions.add(#type: ignore

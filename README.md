@@ -351,24 +351,25 @@ print(prompt)
 
 #### StopsConstraint  
 
-`StopsConstraint` allows you to constrain the generated text by stopping at a specified string. For example, to generate text that stops after the word "stop":
+`StopsConstraint` allows you to constrain the generated text by stopping at a specified string or regex pattern.
+
+Say we want the model to generate between two XML tags and stop once it reaches the second. 
+
+If we are afraid of a malformed end tag with unneeded whitespace, we can account for it as well.
 
 ```python
-constraint = StopsConstraint(stop="!")
+constraint = StopsConstraint(r"<\s*/?\s*hello\s*>", include=True)
 
 prompt = Prompt(
-    """
-%system%You are an agent that says short phrases%/system%
-%user%Be very excited with your punctuation and give me a short phrase about dogs.%/user%
-"""
+    "Finish this phrase with an end tag then say 'finished' <hello>Hi, the world is "
 )
 
+prompt = await prompt.complete(
+    model=chat_model, constraint=constraint, name="world_description", stream=MyStream()
+)
 
-prompt = await prompt.complete(model=chat_model, constraint=constraint, name="stop")
-print(prompt)
-# %system%You are an agent that says short phrases%/system%
-# %user%Be very excited with your punctuation and give me a short phrase about dogs.%/user%
-# "Dogs are absolutely pawsome!"
+print(prompt.completions.world_description)
+# beautiful.</hello>
 ```
 
 ### Combining Constraints  
@@ -395,27 +396,37 @@ print(prompt)
 
 KeyMaker provides a very slim and intuitive means to access completion generation as it happens.
 
-Simply pass a prompt `complete` your stream object which has a method `async def put` like so
+Simply pass a prompt `complete` an asynchronous function
 
 ```python
+from typing import Optional
 from keymaker import Completion
 
-class MyStream:
-    async def put(self, item: Completion):
-        ...
+async def my_stream(completion: Optional[Completion]):
+    print(completion)
 
-my_stream = MyStream()
+prompt = Prompt("Hello, I'm a talking dog and my name is")
 
-prompt = Prompt(...)
+prompt = await prompt.complete(
+    model=chat_model,
+    stream=my_stream,
+)
 
-await prompt.complete(..., stream = my_stream)
+# R
+# over
+# .
+#  How
+#  can
+#  I
+#  assist
+#  you
+#  today
+# ?
+# None
 ```
 
-Your stream object will receive the delta `Completion`s as they occur and you can manipulate and forward them as you please.
-
-A common object implementing this streaming interface is `asyncio.Queue`.
-
-
+As you can see, the incremental tokens `R, over, ...` were passed to the `my_stream` function and were printed as they were generated. 
+Further, the stream was fed a terminal signal of `None` indicated the stream was complete hence the `Optional[Completion]` type hint.
 
 ### Creating Custom Models  
 
