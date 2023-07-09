@@ -1,10 +1,11 @@
 """Constraints for stop patterns"""
 from dataclasses import dataclass
 
+import regex as re
+
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
 from keymaker.types import TokenConstraint
-import regex as re
 
 
 @dataclass
@@ -18,16 +19,14 @@ class StopsConstraint(Constraint):
 
     stop: str
     include: bool = True
-    
+
     def __post_init__(self):
         self._pattern = re.compile(rf"(?P<completion>.*?)(?P<stop>{self.stop})")
-    
-    def constrain_tokens(
-        self, base_text: str, completion_text: str, model: Model
-    ) -> TokenConstraint:
+
+    def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> TokenConstraint:
         match = self._pattern.search(completion_text)
         if match:
             if not self.include:
                 return match.group('completion')
-            return match.group('completion')+match.group('stop')
+            return match.group('completion') + match.group('stop')
         return None

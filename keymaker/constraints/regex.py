@@ -7,7 +7,7 @@ import regex as re
 
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
-from keymaker.types import TokenConstraint
+from keymaker.types import TokenConstraint, TokenIds
 
 
 @dataclass
@@ -26,6 +26,26 @@ class RegexConstraint(Constraint):
 
     def __post_init__(self):
         self._pattern: re.Pattern[str] = re.compile(self.pattern) if isinstance(self.pattern, str) else self.pattern
+
+    def validate_partial_generation(
+        self,
+        base_text: str,
+        completion_tokens: TokenIds,
+        model: Model,
+        token_constraint: TokenConstraint,
+    ) -> TokenIds:
+        completion = model.decode(completion_tokens)
+        m = self._pattern.match(completion)
+        if m and m.start() == 0:
+            return completion_tokens
+        if token_constraint == set():
+            return []
+        gen = ""
+        for char in completion:
+            match = self._pattern.match(gen + char, partial=True)
+            if not match:
+                return model.encode(gen)
+        return model.encode(gen)
 
     def _is_valid_token(self, token_id: int, partial_completion: str, model: "Model") -> bool:
         decoded_token = model.tokens[token_id]

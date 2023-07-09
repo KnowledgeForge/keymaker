@@ -1,6 +1,6 @@
 """Base model interface"""
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, Callable, ClassVar, FrozenSet, Optional, Set
+from typing import AsyncGenerator, ClassVar, FrozenSet, List, Optional, Set
 
 from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
 
@@ -14,7 +14,7 @@ class Model(ABC):
     max_total_tokens: int = 512
     supported_decodings: ClassVar[FrozenSet[DecodingStrategy]]
     sample_chunk_size: int = 1
-    
+
     @abstractmethod
     async def generate(
         self,
@@ -44,7 +44,7 @@ class Model(ABC):
         selected_tokens: Optional[SelectedTokens] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
-    ) -> str:
+    ) -> List[str]:
         """Sample from the language model given the input text and the selected tokens to constrain the sampling.
 
         Args:
@@ -61,9 +61,9 @@ class Model(ABC):
             decoder=decoder,
             timeout=timeout,
         )
-        ret = ""
-        async for tok in gen:
-            ret+= tok
+        ret = []
+        async for tok in gen:  # type: ignore
+            ret.append(tok)
         return ret
 
     @abstractmethod

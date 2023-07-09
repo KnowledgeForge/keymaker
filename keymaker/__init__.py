@@ -1,1 +1,1 @@
-from .prompt import Prompt, Completion#type: ignore
+from .prompt import Completion, Prompt  # type: ignore # noqa: F401

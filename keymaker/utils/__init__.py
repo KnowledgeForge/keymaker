@@ -1,1 +1,1 @@
-from .chat import strip_tags
+from .chat import strip_tags  # noqa: F401

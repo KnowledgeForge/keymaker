@@ -16,7 +16,7 @@
 
 ## Table of Contents
 
-- [About KeyMaker](#about-keymaker) 
+- [About KeyMaker](#about-keymaker)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Basic Example](#basic-example)
@@ -26,44 +26,44 @@
   - [OpenAI](#openai)
 - [Using Chat models](#using-chat-models)
   - [Mixing Chat and Non-Chat Models](#mixing-chat-and-non-chat-models)
-- [Using Constraints](#using-constraints)  
+- [Using Constraints](#using-constraints)
   - [RegexConstraint](#regexconstraint)
-  - [ParserConstraint](#parserconstraint) 
+  - [ParserConstraint](#parserconstraint)
   - [OptionsConstraint](#optionsconstraint)
   - [StopsConstraint](#stopsconstraint)
 - [Combining Constraints](#combining-constraints)
 - [Streaming Completions](#streaming-completions)
 - [Creating Custom Models](#creating-custom-models)
-- [Creating Custom Constraints](#creating-custom-constraints)  
+- [Creating Custom Constraints](#creating-custom-constraints)
 - [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
 - [Disclaimer](#disclaimer)
 - [Copyright](#copyright)
 
-## About KeyMaker  
+## About KeyMaker
 
-KeyMaker is a Python library that provides a powerful, flexible, and extensible way 
-to control the output of large language models like OpenAI API-based models and Hugging Face's Transformers. 
-It allows you to create and apply constraints on the generated tokens, ensuring that 
+KeyMaker is a Python library that provides a powerful, flexible, and extensible way
+to control the output of large language models like OpenAI API-based models and Hugging Face's Transformers.
+It allows you to create and apply constraints on the generated tokens, ensuring that
 the output of the model meets specific requirements or follows a desired format.
 
-## Installation  
+## Installation
 
-To install KeyMaker, simply run the following command:  
+To install KeyMaker, simply run the following command:
 
-### From source:  
+### From source:
 
 ```sh
 pip install https://github.com/KnowledgeForge/keymaker.git
-```  
+```
 
-### From pypi:  
+### From pypi:
 
 ```sh
 pip install headjack-keymaker
-```    
+```
 
-## Usage   
+## Usage
 
 ### Basic Example
 
@@ -150,7 +150,7 @@ Completions([], {'dog_ability': Completion(text = ' ability', start = 24, stop =
 
 ### Accessing Completions
 
-When using KeyMaker to generate text with constraints, you can name the completions to easily access them later. 
+When using KeyMaker to generate text with constraints, you can name the completions to easily access them later.
 All completions are stored in the `completions` attribute of a `Prompt` object.
 
 Here's an example of how to access both named and unnamed completions:
@@ -193,7 +193,7 @@ Unnamed completion: sunny
 Named completion:  and warm
 ```
 
-In the example, we create a `Prompt` object with the text "The weather is ". We then generate an unnamed completion with a `RegexConstraint` that matches the words "sunny", "rainy", or "cloudy", and a named completion with a `RegexConstraint` that matches " and " followed by "cold", "warm", or "hot". 
+In the example, we create a `Prompt` object with the text "The weather is ". We then generate an unnamed completion with a `RegexConstraint` that matches the words "sunny", "rainy", or "cloudy", and a named completion with a `RegexConstraint` that matches " and " followed by "cold", "warm", or "hot".
 
 We access the unnamed completion by indexing the `completions` attribute of the `Prompt` object, and the named completion by using the `name` as an attribute of the `completions` attribute.
 
@@ -285,11 +285,11 @@ Assistant: "Dogs are absolutely pawsome!"')
 ```
 
 
-### Using Constraints  
+### Using Constraints
 
 KeyMaker provides several out-of-the-box constraints that can be applied when completing prompts.
 
-KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Constraint](#creating-custom-constraints)  
+KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Constraint](#creating-custom-constraints)
 
 Let's go through some of the built-in constraint types and how to use them.
 
@@ -300,18 +300,27 @@ Let's go through some of the built-in constraint types and how to use them.
 ```python
 from keymaker.constraints import RegexConstraint
 
-constraint = RegexConstraint(pattern=r"I (would|could) eat [0-9]{1, 2} burgers\.")
+constraint = RegexConstraint(
+    pattern=r"I (would|could) eat [0-9]{1,2} (burgers|burger)\."
+)
 
-prompt = await Prompt("Hello, ").complete(model=chat_model, constraint=constraint, name="greeting")
+prompt = await Prompt("Wow, I'm so hungry ").complete(
+    model=chat_model, constraint=constraint
+)
 print(prompt)
-# Hello, I could eat 8 burgers.
+# Wow, I'm so hungry I would eat 11 burgers.
 ```
 
-#### ParserConstraint  
+Note: This example is a little contrived in that there is static completion in regex itself.
+This is not always the most efficient way to do some completions.
+You may consider doing multiple completions in a case like this.
+KeyMaker does its best to avoid unnecessary calls to the model if a token is clearly determined.
+
+#### ParserConstraint
 
 `ParserConstraint` allows you to constrain the generated text based on a context-free grammar or a pre-built parser. For example, to generate text that follows a simple grammar:
 
-```python 
+```python
 from keymaker.constraints import ParserConstraint
 
 grammar = """
@@ -321,15 +330,15 @@ start: "A" "B" "C"
 constraint = ParserConstraint(grammar=grammar)
 ```
 
-To apply this constraint, pass it to the `complete` method: 
+To apply this constraint, pass it to the `complete` method:
 
 ```python
 prompt = Prompt("Start: ")
 prompt = await prompt.complete(model=hf, constraint=constraint, name="grammar")
-print(prompt) 
+print(prompt)
 ```
 
-#### OptionsConstraint  
+#### OptionsConstraint
 
 `OptionsConstraint` allows you to constrain the generated text based on a list of string options. For example, to generate text that contains one of the following options:
 
@@ -340,20 +349,20 @@ options = {"apple", "banana", "orange"}
 constraint = OptionsConstraint(options=options)
 ```
 
-To apply this constraint, pass it to the `complete` method:  
+To apply this constraint, pass it to the `complete` method:
 
-```python  
-prompt = Prompt("I would like an ") 
+```python
+prompt = Prompt("I would like an ")
 prompt = await prompt.complete(model=hf, constraint=constraint, name="fruit")
 print(prompt)
 # I would like an apple
 ```
 
-#### StopsConstraint  
+#### StopsConstraint
 
 `StopsConstraint` allows you to constrain the generated text by stopping at a specified string or regex pattern.
 
-Say we want the model to generate between two XML tags and stop once it reaches the second. 
+Say we want the model to generate between two XML tags and stop once it reaches the second.
 
 If we are afraid of a malformed end tag with unneeded whitespace, we can account for it as well.
 
@@ -372,9 +381,9 @@ print(prompt.completions.world_description)
 # beautiful.</hello>
 ```
 
-### Combining Constraints  
+### Combining Constraints
 
-KeyMaker also allows you to combine multiple constraints using logical operators like `AndConstraint`, `OrConstraint`, and `NotConstraint`. 
+KeyMaker also allows you to combine multiple constraints using logical operators like `AndConstraint`, `OrConstraint`, and `NotConstraint`.
 
 ```python
 from keymaker.constraints import OrConstraint, RegexConstraint, OptionsConstraint
@@ -425,10 +434,10 @@ prompt = await prompt.complete(
 # None
 ```
 
-As you can see, the incremental tokens `R, over, ...` were passed to the `my_stream` function and were printed as they were generated. 
+As you can see, the incremental tokens `R, over, ...` were passed to the `my_stream` function and were printed as they were generated.
 Further, the stream was fed a terminal signal of `None` indicated the stream was complete hence the `Optional[Completion]` type hint.
 
-### Creating Custom Models  
+### Creating Custom Models
 
 To create a custom model, you need to extend the `Model` class provided by KeyMaker and implement the required methods. Here's an example of creating a custom model:
 
@@ -441,7 +450,7 @@ from keymaker.types import Decoder
 class CustomModel(Model):
     def __init__(self, ...):  # Add any required initialization parameters
         # Initialize your custom model here
-        pass  
+        pass
 
     async def generate(
         self,
@@ -452,28 +461,28 @@ class CustomModel(Model):
         timeout: float = 10.0,
     ) -> AsyncGenerator[str, None]:
         # Implement the logic for generating text with your custom model
-        pass  
+        pass
 
     def encode(self, text: str) -> TokenIds:
         # Implement the logic for encoding text as token ids
-        pass  
+        pass
 
     def decode(self, ids: TokenIds) -> str:
         # Implement the logic for decoding token ids as text
-        pass  
+        pass
 
     # ...
-```  
+```
 
 You can then use your custom model with KeyMaker as you would with the built-in models:
 
 ```python
 model = CustomModel(...)
 prompt = Prompt("My custom model says: ")
-prompt = await prompt.complete(model=model, constraint=your_constraint, name="custom_output")  
+prompt = await prompt.complete(model=model, constraint=your_constraint, name="custom_output")
 print(prompt)
 ```
-    
+
 ### Creating Custom Constraints
 
 To create a custom constraint, you need to extend the `Constraint` class provided by KeyMaker and implement the `constrain_tokens` method. Here's an example of creating a custom constraint:
@@ -485,7 +494,7 @@ from keymaker.types import TokenConstraint
 class CustomConstraint(Constraint):
     def __init__(self, ...):  # Add any required initialization parameters
         # Initialize your custom constraint here
-        pass  
+        pass
 
     def constrain_tokens(
         self, base_text: str, completion_text: str, model: Model

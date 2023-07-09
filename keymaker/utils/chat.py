@@ -1,4 +1,4 @@
-from typing import Dict, FrozenSet, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, FrozenSet, List
 
 import regex as re
 
@@ -78,6 +78,7 @@ def strip_tags(
     sep: str = "\n",
 ) -> "Prompt":
     from keymaker import Prompt
+
     messages = split_tags(text=prompt, tag_start=tag_start, tag_end=tag_end, roles=frozenset(roles_seps.keys()))
     return Prompt(
         sep.join((roles_seps[message["role"]] + message["content"] for message in messages)),
