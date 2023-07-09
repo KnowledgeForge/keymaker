@@ -27,7 +27,6 @@ class Huggingface(Model):
     model_name: Optional[str] = None
     model: Optional[AutoModelForCausalLM] = None
     tokenizer: Optional[AutoTokenizer] = None
-    chunk_size: int = 64
     supported_decodings: FrozenSet[DecodingStrategy] = frozenset(  # type: ignore
         (
             DecodingStrategy.GREEDY,
@@ -43,9 +42,6 @@ class Huggingface(Model):
         self.model = self.model or AutoModelForCausalLM.from_pretrained(self.model_name)
         self.tokenizer = self.tokenizer or AutoTokenizer.from_pretrained(self.model_name)
         self.tokens = transformers_tokens(self.tokenizer)
-        self._completion_buffer = {}
-        if self.chunk_size < 1:
-            raise ValueError(f"`chunksize` must be positive, got {self.chunksize}.")
 
     def encode(self, text: str) -> TokenIds:
         return self.tokenizer.encode(text)  # type: ignore
@@ -98,7 +94,7 @@ class Huggingface(Model):
         n_gen = 0
         prompt_token_ids = self.tokenizer.encode(text)  # type: ignore
         while n_gen < max_tokens:
-            max_new_tokens = min(self.chunk_size, max_tokens - n_gen)
+            max_new_tokens = max_tokens - n_gen
             output = await asyncio.to_thread(
                 self.model.generate,  # type: ignore
                 input_ids=torch.tensor(prompt_token_ids).unsqueeze(0).to(self.model.device),  # type: ignore

@@ -1,5 +1,6 @@
 from .huggingface import Huggingface  # noqa: F401
 from .openai import OpenAIChat, OpenAICompletion
+from .vllm import VLLM  # noqa: F401
 
 
 def chatgpt(completion: bool = False, *args, **kwargs):
