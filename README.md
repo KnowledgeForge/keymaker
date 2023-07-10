@@ -7,6 +7,10 @@
     <br />
     <a href="https://keymaker.headjack.ai"><strong>Explore the docs »</strong></a>
     <br />
+  <a href="https://github.com/KnowledgeForge/keymaker/actions/workflows/python-checks.yml" target="_blank">
+    <img src="https://github.com/KnowledgeForge/keymaker/actions/workflows/python-checks.yml/badge.svg?branch=main" alt="Tests">
+  </a>
+
     <br />
     <a href="https://github.com/KnowledgeForge/keymaker/issues">Report Bug</a>
     <br/>
