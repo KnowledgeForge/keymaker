@@ -1,7 +1,7 @@
 """Constraints over sets of fixed options"""
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Set
+from typing import Set, Tuple
 
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
@@ -21,9 +21,15 @@ class OptionsConstraint(Constraint):
         decoded_token = model.tokens[token_id]
         return any(option.startswith(partial_completion + decoded_token) for option in self.options)
 
-    def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> TokenConstraint:
+    def constrain_tokens(
+        self,
+        base_text: str,
+        completion_text: str,
+        model: Model,
+        state: None = None,
+    ) -> Tuple[TokenConstraint, None]:
         if completion_text in self.options:
-            return completion_text
+            return completion_text, None
 
         if completion_text and self.short_circuit:
             limited_options = set()
@@ -33,9 +39,9 @@ class OptionsConstraint(Constraint):
                     if len(limited_options) > 1:
                         break
             if len(limited_options) == 0:
-                return set()
+                return set(), None
             if len(limited_options) == 1:
-                return limited_options.pop()
+                return limited_options.pop(), None
 
         with ThreadPoolExecutor():
             valid_token_ids = set(
@@ -45,4 +51,4 @@ class OptionsConstraint(Constraint):
                 ),
             )
 
-        return valid_token_ids
+        return valid_token_ids, None

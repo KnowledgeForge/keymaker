@@ -1,5 +1,6 @@
 """Constraints for stop patterns"""
 from dataclasses import dataclass
+from typing import Tuple
 
 import regex as re
 
@@ -23,10 +24,16 @@ class StopsConstraint(Constraint):
     def __post_init__(self):
         self._pattern = re.compile(rf"(?P<completion>.*?)(?P<stop>{self.stop})")
 
-    def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> TokenConstraint:
+    def constrain_tokens(
+        self,
+        base_text: str,
+        completion_text: str,
+        model: Model,
+        state: None = None,
+    ) -> Tuple[TokenConstraint, None]:
         match = self._pattern.search(completion_text)
         if match:
             if not self.include:
-                return match.group('completion')
-            return match.group('completion') + match.group('stop')
-        return None
+                return match.group('completion'), None
+            return match.group('completion') + match.group('stop'), None
+        return None, None

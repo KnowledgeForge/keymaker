@@ -179,10 +179,12 @@ class Prompt(str):
         prompt_plus_completion = text[:]
         gen_tokens = []
         buffer_tokens: List[int] = []
+        constraint_state = None
         while token_count < token_limit:
             token = None
             generation = None
-            selected_token_ids = constraint.constrain_tokens(text, partial_completion, model)
+
+            selected_token_ids, constraint_state = constraint.constrain_tokens(text, partial_completion, model, constraint_state)
 
             if selected_token_ids:
                 # if the selected tokens have the same number than the vocab size, there's no real restriction

@@ -68,7 +68,7 @@ the output of the model meets specific requirements or follows a desired format.
 
 ## Installation
 
-To install KeyMaker, simply run the following command:
+To install base KeyMaker, simply run one of the following commands:
 
 ### From source:
 
@@ -79,14 +79,14 @@ pip install git+https://github.com/KnowledgeForge/keymaker.git
 ### From pypi:
 
 ```sh
-pip install headjack-keymaker
+pip install "headjack-keymaker"
 ```
 
 #### Options
 You can further optionally install KeyMaker to leverage HuggingFace or LlamaCpp directly with `[huggingface]` and/or `[llamacpp]` pip options.
 - `pip install "headjack-keymaker[huggingface]"`
 - `pip install "headjack-keymaker[llamacpp]"`
-- `pip install "headjack-keymaker[huggingface, llamacpp]"`
+- `pip install "headjack-keymaker[all]"` includes both huggingface and llamacpp
 
 ## Usage
 
@@ -373,21 +373,36 @@ KeyMaker does its best to avoid unnecessary calls to the model if a token is cle
 `ParserConstraint` allows you to constrain the generated text based on a context-free grammar or a pre-built parser. For example, to generate text that follows a simple grammar:
 
 ```python
-from keymaker.constraints import ParserConstraint
+from lark import Lark
+import openai
+from keymaker.models import gpt4
 
-grammar = """
-start: "A" "B" "C"
+sql_grammar = """
+    start: statement+
+
+    statement: create_table | select_statement
+
+    create_table: "CREATE" "TABLE" ("a" | "b") "(" ("x" | "y") ")"
+
+    select_statement: "SELECT " ("x" | "y") " FROM " ("a" | "b")
 """
 
-constraint = ParserConstraint(grammar=grammar)
-```
+parser = Lark(sql_grammar)
 
-To apply this constraint, pass it to the `complete` method:
+openai.api_key = "..."
 
-```python
-prompt = Prompt("Start: ")
-prompt = await prompt.complete(model=hf, constraint=constraint, name="grammar")
-print(prompt)
+model = gpt4()
+
+prompt = Prompt("""
+%system%You are a sql expert%/system%
+%user%Write me a query that selects the column y from table b.%/user%
+""")
+
+prompt = await prompt.complete(model=model, constraint=constraint, name='query', max_tokens=100)
+# Prompt('
+# %system%You are a sql expert%/system%
+# %user%Write me a query that selects the column y from table b.%/user%
+# SELECT y FROM b')
 ```
 
 #### OptionsConstraint

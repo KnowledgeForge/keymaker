@@ -1,7 +1,7 @@
 """Common logical constraints for combining other constraints"""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Sequence, Set, Union, cast
+from typing import TYPE_CHECKING, List, Sequence, Tuple, cast
 
 from keymaker.constraints.base import Constraint
 from keymaker.types import TokenConstraint
@@ -20,11 +20,17 @@ class NotConstraint(Constraint):
 
     constraint: Constraint
 
-    def constrain_tokens(self, base_text: str, completion_text: str, model: "Model") -> TokenConstraint:
+    def constrain_tokens(
+        self,
+        base_text: str,
+        completion_text: str,
+        model: "Model",
+        state: None = None,
+    ) -> Tuple[TokenConstraint, None]:
         selected_tokens = self.constraint.constrain_tokens(base_text, completion_text, model)
         if selected_tokens is None or isinstance(selected_tokens, str):
-            return selected_tokens
-        return {tok for tok in model.tokens if tok not in selected_tokens}
+            return selected_tokens, None
+        return {tok for tok in model.tokens if tok not in selected_tokens}, None
 
 
 @dataclass
@@ -37,7 +43,13 @@ class AndConstraint(Constraint):
 
     constraints: Sequence[Constraint]
 
-    def constrain_tokens(self, base_text: str, completion_text: str, model: "Model") -> Union[None, Set[int], str]:
+    def constrain_tokens(
+        self,
+        base_text: str,
+        completion_text: str,
+        model: "Model",
+        state: None = None,
+    ) -> Tuple[TokenConstraint, None]:
         ret = None
         completions: List[str] = []
         for constraint in self.constraints:
@@ -53,8 +65,8 @@ class AndConstraint(Constraint):
         if len(completions) == len(self.constraints):
             if len(set(completions)) != 1:
                 raise ValueError(f"Got different completions for constraints `{self}`. Completions: `{set(completions)}`")
-            return completions[0]
-        return ret
+            return completions[0], None
+        return ret, None
 
 
 @dataclass
@@ -67,15 +79,21 @@ class OrConstraint(Constraint):
 
     constraints: Sequence[Constraint]
 
-    def constrain_tokens(self, base_text: str, completion_text: str, model: "Model") -> Union[None, Set[int], str]:
-        ret = set()
+    def constrain_tokens(
+        self,
+        base_text: str,
+        completion_text: str,
+        model: "Model",
+        state: None = None,
+    ) -> Tuple[TokenConstraint, None]:
+        ret = set()  # type: ignore
         for constraint in self.constraints:
             selected_tokens = constraint.constrain_tokens(base_text, completion_text, model)
             if selected_tokens is None:
                 # One allows everything so overall the or does
-                return None
+                return None, None
             if isinstance(selected_tokens, str):
-                return selected_tokens
+                return selected_tokens, None
             if isinstance(selected_tokens, set):
                 ret |= selected_tokens
-        return ret
+        return ret, None

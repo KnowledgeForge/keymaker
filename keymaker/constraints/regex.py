@@ -1,7 +1,7 @@
 """Constraints for regex patterns"""
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Union
+from typing import Tuple, Union
 
 import regex as re
 
@@ -31,11 +31,17 @@ class RegexConstraint(Constraint):
         decoded_token = model.tokens[token_id]
         return self._pattern.fullmatch(partial_completion + decoded_token, partial=True)
 
-    def constrain_tokens(self, base_text: str, completion_text: str, model: "Model") -> TokenConstraint:
+    def constrain_tokens(
+        self,
+        base_text: str,
+        completion_text: str,
+        model: "Model",
+        state: None = None,
+    ) -> Tuple[TokenConstraint, None]:
         if self.terminate_on_match:
             m = self._pattern.match(completion_text)
             if m and m.start() == 0:
-                return completion_text
+                return completion_text, None
 
         with ThreadPoolExecutor():
             valid_token_ids = set(
@@ -45,4 +51,4 @@ class RegexConstraint(Constraint):
                 ),
             )
 
-        return valid_token_ids
+        return valid_token_ids, None
