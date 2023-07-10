@@ -17,6 +17,7 @@
 ## Table of Contents
 
 - [About KeyMaker](#about-keymaker)
+- [Why KeyMaker](#why-keymaker)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Basic Example](#basic-example)
@@ -46,9 +47,24 @@
 ## About KeyMaker
 
 KeyMaker is a Python library that provides a powerful, flexible, and extensible way
-to control the output of large language models like OpenAI API-based models and Hugging Face's Transformers.
+to control the output of large language models like OpenAI API-based models, Hugging Face's Transformers, LlamaCpp and (**Coming Soon**) any OpenAI API compatible server.
 It allows you to create and apply constraints on the generated tokens, ensuring that
 the output of the model meets specific requirements or follows a desired format.
+
+## Why KeyMaker?
+- Generation is expensive and error-prone
+  - Regardless of the model, if you are building something around it, you know what you want. Make the model do what you want with constrained generation!
+  - If you want to write control-flow around model decisions, you make the model select from a fixed set of decisions.
+  - Need to use a tool? Guarantee the model outputs values your tool can use. No reprompting based on errors like Langchain.
+- KeyMaker is pure python
+  - alternatives like LMQL and Guidance require the use of Domain-specific languages
+- Keymaker provides generation regardless of the underlying model
+  - Alternatives do not support the likes of LlamaCPP
+  - Some alternatives do not allow you to use chat models for constrained generation
+- KeyMaker is powerful *and* extensible
+  - While others provide a limited set of existing constraints, KeyMaker provides the most extensive list
+  - And you can add whatever more you want or need simply making a class
+
 
 ## Installation
 
