@@ -376,6 +376,7 @@ KeyMaker does its best to avoid unnecessary calls to the model if a token is cle
 from lark import Lark
 import openai
 from keymaker.models import gpt4
+from keymaker.constraints import ParserConstraint
 
 sql_grammar = """
     start: statement+
@@ -388,6 +389,10 @@ sql_grammar = """
 """
 
 parser = Lark(sql_grammar)
+
+constraint = ParserConstraint(parser = parser)
+# or pass the grammar directly
+# constraint = ParserConstraint(grammar = grammar)
 
 openai.api_key = "..."
 
