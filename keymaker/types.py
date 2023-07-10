@@ -1,8 +1,9 @@
 '''Common types used throughout keymaker'''
+import warnings
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Set, Union, Optional
-import warnings
+from typing import Dict, List, Optional, Set, Union
+
 
 class DecodingStrategy(str, Enum):
     GREEDY = "GREEDY"
@@ -17,7 +18,7 @@ class Decoder:
     strategy: DecodingStrategy = DecodingStrategy.GREEDY
 
     def __post_init__(self):
-        if self.top_k is not None and self.top_k!=1 and self.strategy == DecodingStrategy.GREEDY:
+        if self.top_k is not None and self.top_k != 1 and self.strategy == DecodingStrategy.GREEDY:
             warnings.warn(f"Greedy decoding top_k {self.top_k} ignored. Setting top_k to 1.")
             self.top_k = 1
 

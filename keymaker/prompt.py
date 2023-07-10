@@ -183,7 +183,7 @@ class Prompt(str):
             token = None
             generation = None
             selected_token_ids = constraint.constrain_tokens(text, partial_completion, model)
-            
+
             if selected_token_ids:
                 # if the selected tokens have the same number than the vocab size, there's no real restriction
                 selected_token_ids = None if len(selected_token_ids) >= model.vocab_size else selected_token_ids
@@ -219,7 +219,7 @@ class Prompt(str):
 
                 if not gen_tokens:
                     break
-                
+
                 token = gen_tokens[0]
                 # in case sampling gave us extra tokens (e.g. sample chunk size of the model is more than 1 like for openai chat models)
                 if len(gen_tokens) > 1:

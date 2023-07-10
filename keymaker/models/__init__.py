@@ -3,8 +3,9 @@ try:
 except ImportError:
     pass
 from .openai import OpenAIChat, OpenAICompletion
+
 try:
-    from .llama_cpp import LlamaCpp #noqa: F401
+    from .llama_cpp import LlamaCpp  # noqa: F401
 except ImportError:
     pass
 
