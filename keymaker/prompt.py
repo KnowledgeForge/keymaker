@@ -215,8 +215,11 @@ class Prompt(str):
 
                 if not generated_tokens:
                     break
-                gen_tokens = [model.encode(tok)[0] for tok in generated_tokens]
+                gen_tokens = [model.encode(tok)[0] for tok in generated_tokens if tok]
 
+                if not gen_tokens:
+                    break
+                
                 token = gen_tokens[0]
                 # in case sampling gave us extra tokens (e.g. sample chunk size of the model is more than 1 like for openai chat models)
                 if len(gen_tokens) > 1:

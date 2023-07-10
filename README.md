@@ -68,6 +68,9 @@ pip install headjack-keymaker
 
 #### Options
 You can further optionally install KeyMaker to leverage HuggingFace or LlamaCpp directly with `[huggingface]` and/or `[llamacpp]` pip options.
+- `pip install "headjack-keymaker[huggingface]"`
+- `pip install "headjack-keymaker[llamacpp]"`
+- `pip install "headjack-keymaker[huggingface, llamacpp]"`
 
 ## Usage
 
@@ -90,6 +93,9 @@ model = AutoModelForCausalLM.from_pretrained("gpt2")
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
 hf = Huggingface(model=model, tokenizer=tokenizer)
+
+# OR JUST
+# hf = Huggingface(model_name="gpt2")
 ```
 
 create a prompt using the Prompt class
@@ -164,6 +170,7 @@ Here's an example of how to access both named and unnamed completions:
 ```python
 from keymaker.models import chatgpt
 from keymaker import Prompt
+from keymaker.constraints import RegexConstraint
 import openai
 
 openai.api_key = "sk-"
@@ -209,7 +216,7 @@ As it stands, the models available for use out of the box are `Huggingface` mode
 KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Model](#creating-custom-models)
 
 #### Huggingface (direct)
-Huggingface models are optional, and you need to install KeyMaker with `pip install ...[huggingface]`, then, simply import the `Huggingface` `Model` class:
+Huggingface models are optional, and you need to install KeyMaker with `pip install "headjack-keymaker[huggingface]"`, then, simply import the `Huggingface` `Model` class:
 ```python
 from keymaker.models import Huggingface
 ```
@@ -245,7 +252,7 @@ prompt = await prompt.complete(model=model, constraint=constraint)
 # Prompt('I'm a farmer and I eat meat.')
 ```
 
-This can be enabled by installing the optional dependencies with `pip install ...[llamacpp]`
+This can be enabled by installing the optional dependencies with `pip install "headjack-keymaker[llamacpp]"`
 
 #### OpenAI Compatible Servers
 **Coming Soon - Ripe for contibution**

@@ -25,7 +25,7 @@ readme = "README.md"
 license = {text = "Apache 2.0"}
 
 [project.optional-dependencies]
-huggingface=["transformers>=4.30.2", "numpy"]
+huggingface=["transformers>=4.30.2", "numpy", "torch"]
 llamacpp=["starlette>=0.28.0", "llama-cpp-python>=0.1.68", "numpy"]
 
 
