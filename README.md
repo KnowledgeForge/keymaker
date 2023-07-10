@@ -57,7 +57,7 @@ To install KeyMaker, simply run the following command:
 ### From source:
 
 ```sh
-pip install https://github.com/KnowledgeForge/keymaker.git
+pip install git+https://github.com/KnowledgeForge/keymaker.git
 ```
 
 ### From pypi:
