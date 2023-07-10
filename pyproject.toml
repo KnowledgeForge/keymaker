@@ -7,7 +7,7 @@ includes = ["keymaker"]
 
 
 [project]
-name = "keymaker"
+name = "headjack-keymaker"
 dynamic = ["version"]
 description = "The most powerful, flexible and extensible way to control the output of large language models."
 authors = [

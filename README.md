@@ -66,6 +66,9 @@ pip install https://github.com/KnowledgeForge/keymaker.git
 pip install headjack-keymaker
 ```
 
+#### Options
+You can further optionally install KeyMaker to leverage HuggingFace or LlamaCpp directly with `[huggingface]` and/or `[llamacpp]` pip options.
+
 ## Usage
 
 ### Basic Example
