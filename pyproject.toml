@@ -16,14 +16,19 @@ authors = [
 ]
 dependencies = [
     "regex>=2023.6.3",
-    "transformers>=4.30.2",
     "tiktoken>=0.4.0",
     "openai>=0.27.8",
-    "aiohttp>=3.8.4",
 ]
+
 requires-python = ">=3.8,<4.0"
 readme = "README.md"
 license = {text = "Apache 2.0"}
+
+[project.optional-dependencies]
+huggingface=["transformers>=4.30.2", "numpy"]
+llamacpp=["starlette>=0.28.0", "llama-cpp-python>=0.1.68", "numpy"]
+
+
 
 [tool.pdm.dev-dependencies]
 dev = [

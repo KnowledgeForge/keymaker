@@ -44,7 +44,7 @@ class Huggingface(Model):
         self.tokens = transformers_tokens(self.tokenizer)
 
     def encode(self, text: str) -> TokenIds:
-        return self.tokenizer.encode(text)  # type: ignore
+        return self.tokenizer.encode(text, add_special_tokens = True)  # type: ignore
 
     def decode(self, ids: TokenIds) -> str:
         return self.tokenizer.decode(ids)  # type: ignore
@@ -82,14 +82,16 @@ class Huggingface(Model):
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
             raise ValueError(f"Unsupported decoding strategy for Huggingface model `{decoder.strategy}`.")
-        temperature = decoder.temperature
-        top_p = decoder.top_p
-        addtl = {}
+        gen_kwargs = {}
+        if temperature:= decoder.temperature:
+            gen_kwargs['temperature'] = temperature
+        if top_p:= decoder.top_p:
+            gen_kwargs['top_p'] = top_p
+        if top_k:= decoder.top_k:
+            gen_kwargs['top_k'] = top_k
 
         if decoder.strategy == DecodingStrategy.SAMPLE:
-            addtl["do_sample"] = True
-
-        gen_kwargs = dict(temperature=temperature, top_p=top_p, **addtl)
+            gen_kwargs["do_sample"] = True
 
         n_gen = 0
         prompt_token_ids = self.tokenizer.encode(text)  # type: ignore

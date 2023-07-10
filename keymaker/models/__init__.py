@@ -1,6 +1,12 @@
-from .huggingface import Huggingface  # noqa: F401
+try:
+    from .huggingface import Huggingface  # noqa: F401
+except ImportError:
+    pass
 from .openai import OpenAIChat, OpenAICompletion
-from .vllm import VLLM  # noqa: F401
+try:
+    from .llama_cpp import LlamaCpp #noqa: F401
+except ImportError:
+    pass
 
 
 def chatgpt(completion: bool = False, *args, **kwargs):

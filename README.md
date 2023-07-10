@@ -24,6 +24,8 @@
 - [Model Options](#model-options)
   - [Huggingface (Direct)](#huggingface-direct)
   - [OpenAI](#openai)
+  - [LlamaCpp](#llama-cpp)
+  - [OpenAI Compatible Servers](#openai-compatible-servers)
 - [Using Chat models](#using-chat-models)
   - [Mixing Chat and Non-Chat Models](#mixing-chat-and-non-chat-models)
 - [Using Constraints](#using-constraints)
@@ -31,8 +33,9 @@
   - [ParserConstraint](#parserconstraint)
   - [OptionsConstraint](#optionsconstraint)
   - [StopsConstraint](#stopsconstraint)
-- [Combining Constraints](#combining-constraints)
+  - [Combining Constraints](#combining-constraints)
 - [Streaming Completions](#streaming-completions)
+- [Decoding Parameters](#decoding-parameters)
 - [Creating Custom Models](#creating-custom-models)
 - [Creating Custom Constraints](#creating-custom-constraints)
 - [Contributing](#contributing)
@@ -203,13 +206,13 @@ As it stands, the models available for use out of the box are `Huggingface` mode
 KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Model](#creating-custom-models)
 
 #### Huggingface (direct)
-To use Huggingface models directly, simply import the `Huggingface` `Model` class:
+Huggingface models are optional, and you need to install KeyMaker with `pip install ...[huggingface]`, then, simply import the `Huggingface` `Model` class:
 ```python
 from keymaker.models import Huggingface
 ```
 
 #### OpenAI
-OpenAI Models can be accessed similarly:
+OpenAI Models can be accessed out-of-the-box:
 ```python
 from keymaker.models import OpenAIChat, OpenAICompletion #e.g. chatgpt/gpt4, text-davinci-003 respectively
 ```
@@ -222,11 +225,35 @@ chat_model=gpt4(...optional configurations for underlying `OpenAIChat` otherwise
 ```
 
 #### Llama-CPP
-**coming soon**
+
+KeyMaker also provides an implementation wrapper around [Llama-Cpp-Python](https://abetlen.github.io/llama-cpp-python)
+
+```python
+from keymaker.models import LlamaCpp
+from keymaker.constraints import RegexConstraint
+from keymaker import Prompt
+
+model = LlamaCpp(model_path="~/Downloads/orca-mini-v2_7b.ggmlv3.q3_K_S.bin")
+
+constraint = RegexConstraint(r"I (eat|drink) (meat|wine)\.")
+prompt = Prompt("I'm a farmer and ")
+
+prompt = await prompt.complete(model=model, constraint=constraint)
+# Prompt('I'm a farmer and I eat meat.')
+```
+
+This can be enabled by installing the optional dependencies with `pip install ...[llamacpp]`
+
+#### OpenAI Compatible Servers
+**Coming Soon - Ripe for contibution**
+
+KeyMaker is looking to make the OpenAI `Model` support other compatible APIs. Simply pass a compatible tokenizer and go!
+
+##### Llama-CPP
 See [Llama-Cpp-Python](https://abetlen.github.io/llama-cpp-python/#web-server)
 
-#### Huggingface (API) via vLLM
-**untested - ripe for contribution**
+##### Huggingface (API) via vLLM
+**Cuda Only**
 See [vLLM](https://vllm.readthedocs.io/en/latest/getting_started/quickstart.html#openai-compatible-server)
 
 ### Using Chat models
@@ -380,7 +407,7 @@ print(prompt.completions.world_description)
 # beautiful.</hello>
 ```
 
-### Combining Constraints
+#### Combining Constraints
 
 KeyMaker also allows you to combine multiple constraints using logical operators like `AndConstraint`, `OrConstraint`, and `NotConstraint`.
 
@@ -435,6 +462,21 @@ prompt = await prompt.complete(
 
 As you can see, the incremental tokens `R, over, ...` were passed to the `my_stream` function and were printed as they were generated.
 Further, the stream was fed a terminal signal of `None` indicated the stream was complete hence the `Optional[Completion]` type hint.
+
+### Decoding Parameters
+
+KeyMaker allows you to set some of the parameters used to sample tokens.
+
+```python
+from keymaker.types import Decoder, DecodingStrategy
+
+decoder = Decoder(temperature = 0.7, top_p = 0.95, strategy = DecodingStrategy.GREEDY)
+...
+# use your parameterization in a completion
+
+prompt = await prompt.complete(..., decoder = decoder)
+```
+
 
 ### Creating Custom Models
 

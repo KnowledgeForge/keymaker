@@ -70,6 +70,7 @@ class OpenAIChat(Model):
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
             raise ValueError(f"Unsupported decoding strategy for {self.__class__} model `{decoder.strategy}`.")
+            
         messages = split_tags(
             text,
             self.role_tag_start,
@@ -80,22 +81,26 @@ class OpenAIChat(Model):
 
         if messages[-1]['role'] != self.default_role:
             messages.append({'role': self.default_role, 'content': " "})
-
-        temperature = decoder.temperature
-        top_p = decoder.top_p
+        gen_kwargs = {}
+        if temperature:= decoder.temperature:
+            gen_kwargs['temperature'] = temperature
+        if top_p:= decoder.top_p:
+            gen_kwargs['top_p'] = top_p
+        if top_k:= decoder.top_k:
+            gen_kwargs['top_k'] = top_k
         if decoder.strategy == DecodingStrategy.GREEDY:
             # try to make the sampling as deterministic as possible
             # to select only the one top token
-            top_p = 0.01  # select only n tokens to get over .01, should virually always be a single token
-            temperature = 0.0
+            gen_kwargs['top_p'] = 0.01  # select only n tokens to get over .01, should virually always be a single token
+            if 'top_k' in gen_kwargs:
+                gen_kwargs['top_k'] = 1
 
         payload = {
             "messages": messages,
             "logit_bias": logit_bias,
             "model": self.model_name,
             "max_tokens": max_tokens,
-            "temperature": temperature,
-            "top_p": top_p,
+            **gen_kwargs
         }
 
         async with aiohttp.ClientSession() as session:
@@ -223,21 +228,25 @@ class OpenAICompletion(Model):
         if decoder.strategy not in self.supported_decodings:
             raise ValueError(f"Unsupported decoding strategy for {self.__class__} model `{decoder.strategy}`.")
 
-        temperature = decoder.temperature
-        top_p = decoder.top_p
+        gen_kwargs = {}
+        if temperature:= decoder.temperature:
+            gen_kwargs['temperature'] = temperature
+        if top_p:= decoder.top_p:
+            gen_kwargs['top_p'] = top_p
+        if top_k:= decoder.top_k:
+            gen_kwargs['top_k'] = top_k
         if decoder.strategy == DecodingStrategy.GREEDY:
             # try to make the sampling as deterministic as possible
             # to select only the one top token
-            top_p = 0.01  # select only n tokens to get over .01, should virually always be a single token
-            temperature = 0.0
-
+            gen_kwargs['top_p'] = 0.01  # select only n tokens to get over .01, should virually always be a single token
+            if 'top_k' in gen_kwargs:
+                gen_kwargs['top_k'] = 1
         payload = {
             "prompt": text,
             "logit_bias": logit_bias,
             "model": self.model_name,
             "max_tokens": max_tokens,
-            "temperature": temperature,
-            "top_p": top_p,
+            **gen_kwargs
         }
 
         async with aiohttp.ClientSession() as session:
