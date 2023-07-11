@@ -1,7 +1,7 @@
 """Common logical constraints for combining other constraints"""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Sequence, Tuple, cast
+from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, cast, Optional
 
 from keymaker.constraints.base import Constraint
 from keymaker.types import TokenConstraint
@@ -25,9 +25,9 @@ class NotConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: "Model",
-        state: None = None,
+        state: Any = None,
     ) -> Tuple[TokenConstraint, None]:
-        selected_tokens = self.constraint.constrain_tokens(base_text, completion_text, model)
+        selected_tokens = self.constraint.constrain_tokens(base_text, completion_text, model, state)
         if selected_tokens is None or isinstance(selected_tokens, str):
             return selected_tokens, None
         return {tok for tok in model.tokens if tok not in selected_tokens}, None
@@ -48,13 +48,14 @@ class AndConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: "Model",
-        state: None = None,
+        state: Optional[List[Any]] = None,
     ) -> Tuple[TokenConstraint, None]:
         ret = None
         completions: List[str] = []
-        for constraint in self.constraints:
+        state = state or [None]*len(self.constraints)
+        for constaint_state, constraint in zip(state, self.constraints):
             completions = []
-            selected_tokens = constraint.constrain_tokens(base_text, completion_text, model)
+            selected_tokens = constraint.constrain_tokens(base_text, completion_text, model, constaint_state)
             if selected_tokens is None:
                 # Do nothing because all tokens are valid
                 pass
@@ -84,11 +85,12 @@ class OrConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: "Model",
-        state: None = None,
+        state: Optional[List[Any]] = None,
     ) -> Tuple[TokenConstraint, None]:
         ret = set()  # type: ignore
-        for constraint in self.constraints:
-            selected_tokens = constraint.constrain_tokens(base_text, completion_text, model)
+        state = state or [None]*len(self.constraints)
+        for constaint_state, constraint in zip(state, self.constraints):
+            selected_tokens = constraint.constrain_tokens(base_text, completion_text, model, constaint_state)
             if selected_tokens is None:
                 # One allows everything so overall the or does
                 return None, None
