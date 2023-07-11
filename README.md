@@ -3,14 +3,19 @@
     <img src="https://github.com/KnowledgeForge/keymaker/blob/main/docs/assets/images/keymaker%20logo.svg" alt="Logo" width="150">
   </a>
   <h3 align="center">KeyMaker</h3>
-  <p align="center">The most powerful, flexible and extensible way to control the output of large language models.
-    <br />
+  <p align="center">
+    The most powerful, flexible and extensible way to control the output of large language models.
+    <br>
     <a href="https://keymaker.headjack.ai"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
+    <br>
+    <br>
+    <a href="https://github.com/KnowledgeForge/keymaker/actions/workflows/python-checks.yml" target="_blank">
+      <img src="https://github.com/KnowledgeForge/keymaker/actions/workflows/python-checks.yml/badge.svg?branch=main" alt="Tests">
+    </a>
+    <br>
+    <br>
     <a href="https://github.com/KnowledgeForge/keymaker/issues">Report Bug</a>
-    <br/>
-    <br/>
+    <br>
   </p>
 </div>
 
