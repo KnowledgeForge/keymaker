@@ -31,7 +31,7 @@ keywords = ["Keymaker", "LLM", "NLP"]
   [home.profile]
     enable = true
     gravatarEmail = ""
-    avatarURL = "/images/Keymaker-logo-small.webp"
+    avatarURL = "/images/keymaker%20logo.webp"
     title = "Keymaker"
     subtitle = "The most powerful, flexible and extensible way to control the output of large language models."
     typeit = false
