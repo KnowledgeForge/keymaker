@@ -66,8 +66,7 @@ the output of the model meets specific requirements or follows a desired format.
   - alternatives like LMQL and Guidance require the use of Domain-specific languages
   - These DSLs, while offering control flow, do not have the same level of control that plain python affords you - [prompts are just strings](#omitting-completions-or-prompt-portions)
 - Keymaker provides generation regardless of the underlying model
-  - Alternatives do not support the likes of LlamaCPP
-  - Some alternatives do not allow you to use chat models for constrained generation
+  - From LlamaCPP and OpenAI, OpenAI compatible APIs, to HuggingFace - use models from your desired source
 - KeyMaker is powerful *and* extensible
   - While others provide a limited set of existing constraints, KeyMaker provides the most extensive list
   - And you can add whatever more you want or need simply making a class
