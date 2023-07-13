@@ -647,7 +647,7 @@ Contributions are very welcome. Simply fork the repository and open a pull reque
 
 ## Acknowledgements
 
-Some constraints in KeyMaker are heavily derived from the work of [Matt Rickard](https://github.com/r2d4). Specifically, ReLLM and ParserLLM.
+Some constraints in KeyMaker are derived from the work of [Matt Rickard](https://github.com/r2d4). Specifically, ReLLM and ParserLLM.
 Similar libraries such as [LMQL](https://github.com/eth-sri/lmql) and [Guidance](https://github.com/microsoft/guidance) have surved as motiviation.
 
 ## Disclaimer
