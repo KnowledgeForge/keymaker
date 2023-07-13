@@ -84,7 +84,7 @@ class Prompt(str):
     """
 
     def __new__(cls, prompt: str, completions: Optional[Completions] = None):
-        if isinstance(prompt, Completion):
+        if isinstance(prompt, Prompt):
             return prompt
         obj = str.__new__(cls, prompt)
         obj.prompt = prompt  # type: ignore

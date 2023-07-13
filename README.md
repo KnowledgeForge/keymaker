@@ -27,6 +27,7 @@
 - [Usage](#usage)
 - [Basic Example](#basic-example)
 - [Accessing Completions](#accessing-completions)
+- [Prompt Mutation On Demand](#omitting-completions-or-prompt-portions)
 - [Model Options](#model-options)
   - [Huggingface (Direct)](#huggingface-direct)
   - [OpenAI](#openai)
@@ -63,6 +64,7 @@ the output of the model meets specific requirements or follows a desired format.
   - Need to use a tool? Guarantee the model outputs values your tool can use. No reprompting based on errors like Langchain.
 - KeyMaker is pure python
   - alternatives like LMQL and Guidance require the use of Domain-specific languages
+  - These DSLs, while offering control flow, do not have the same level of control that plain python affords you - [prompts are just strings](#omitting-completions-or-prompt-portions)
 - Keymaker provides generation regardless of the underlying model
   - Alternatives do not support the likes of LlamaCPP
   - Some alternatives do not allow you to use chat models for constrained generation
@@ -230,6 +232,39 @@ Named completion:  and warm
 In the example, we create a `Prompt` object with the text "The weather is ". We then generate an unnamed completion with a `RegexConstraint` that matches the words "sunny", "rainy", or "cloudy", and a named completion with a `RegexConstraint` that matches " and " followed by "cold", "warm", or "hot".
 
 We access the unnamed completion by indexing the `completions` attribute of the `Prompt` object, and the named completion by using the `name` as an attribute of the `completions` attribute.
+
+### Omitting Completions or Prompt Portions
+Again, KeyMaker's goal is to afford you all the power of LLM completions, with controlled outputs from the comfort and power of plain Python.
+
+With that in mind, we can do something seemingly basic but that may not be possible or obvious in other frameworks - not use things we've made!
+
+```python
+from keymaker.models import LlamaCpp
+from keymaker.constraints import RegexConstraint
+from keymaker import Prompt
+
+model = LlamaCpp(model_path="/Users/nick/Downloads/orca-mini-v2_7b.ggmlv3.q3_K_S.bin")
+
+constraint = RegexConstraint(r"I (eat|drink) (meat|wine)\.")
+
+prompt = Prompt("I'm a farmer and ")
+
+prompt = await prompt.complete(model=model, constraint=constraint, name='farmer_diet')
+# Prompt('I'm a farmer and I eat meat.')
+
+# >>> repr(prompt.completions.farmer_diet)
+# "Completion(text = 'I eat meat.', start = 17, stop = 28)"
+
+# our prompt will just be the farmer's statement now
+if 'meat' in prompt:
+    prompt = Prompt(prompt.completions.farmer_diet)+" This means that"
+# >>> repr(prompt)
+# "Prompt('I eat meat. This means that')"
+
+# continue with completions with prompt that
+# may be mutated by some other control flow as shown above
+prompt = await prompt.complete(...)
+```
 
 ### Model Options
 As it stands, the models available for use out of the box are `Huggingface` models and APIs implementing the OpenAI spec.
