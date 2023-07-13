@@ -238,6 +238,8 @@ Again, KeyMaker's goal is to afford you all the power of LLM completions, with c
 
 With that in mind, we can do something seemingly basic but that may not be possible or obvious in other frameworks - not use things we've made!
 
+You want your prompt to be only what you need - only the tokens you want to pay for - only the tokens you want the model to attend to - make it so with regular control-flow.
+
 ```python
 from keymaker.models import LlamaCpp
 from keymaker.constraints import RegexConstraint
