@@ -1,7 +1,7 @@
 """Common logical constraints for combining other constraints"""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, cast, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple, cast
 
 from keymaker.constraints.base import Constraint
 from keymaker.types import TokenConstraint
@@ -52,7 +52,7 @@ class AndConstraint(Constraint):
     ) -> Tuple[TokenConstraint, None]:
         ret = None
         completions: List[str] = []
-        state = state or [None]*len(self.constraints)
+        state = state or [None] * len(self.constraints)
         for constaint_state, constraint in zip(state, self.constraints):
             completions = []
             selected_tokens = constraint.constrain_tokens(base_text, completion_text, model, constaint_state)
@@ -88,7 +88,7 @@ class OrConstraint(Constraint):
         state: Optional[List[Any]] = None,
     ) -> Tuple[TokenConstraint, None]:
         ret = set()  # type: ignore
-        state = state or [None]*len(self.constraints)
+        state = state or [None] * len(self.constraints)
         for constaint_state, constraint in zip(state, self.constraints):
             selected_tokens = constraint.constrain_tokens(base_text, completion_text, model, constaint_state)
             if selected_tokens is None:
