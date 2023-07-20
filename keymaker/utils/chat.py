@@ -5,6 +5,9 @@ import regex as re
 if TYPE_CHECKING:
     from keymaker import Prompt
 
+from parsy import regex, string, seq, alt
+
+
 
 def split_tags(
     text: str,
@@ -30,40 +33,29 @@ def split_tags(
         Exception: If an end tag is found with no start tag, or if an unknown or mismatched tag is found.
 
     Examples:
-        >>> split_tags('\nYou are a friendly bot\n%/system%\n%user%Can you help me calculate stuff?%/user%\nYes, how may I help you?\n%user%\nI want to know the square root of 10%/user%\n%assistant%\nSure the square root of 10 is ...\n%/assistant%')
+        >>> split_tags('%system%\nYou are a friendly bot\n%/system%\n%user%Can you help me calculate stuff?%/user%\nYes, how may I help you?\n%user%\nI want to know the square root of 10%/user%\n%assistant%\nSure the square root of 10 is ...\n%/assistant%')
         [{'role': 'assistant', 'content': 'You are a friendly bot\n'}, {'role': 'system', 'content': ''}, {'role': 'user', 'content': 'Can you help me calculate stuff?'}, {'role': 'assistant', 'content': 'Yes, how may I help you?\n'}, {'role': 'user', 'co...
     """
     text = str(text)
-    messages = []
+    role = alt(*(string(s) for s in roles))
+    tag_begin = seq(
+        string(tag_start), 
+        role,
+        string(tag_end), 
+    )
+    tag_complete = seq(
+        string(tag_start), 
+        string("/"),
+        role,
+        string(tag_end), 
+    )
 
-    while text:
-        # first we check to see if the text is untagged
-        match_role = None
-        match = re.search(
-            rf"(?P<content>\s*.*?)\s*(?P<tag>{tag_start}/?(?P<role>.*?){tag_end}\s*|$)",
-            text,
-        )
-        if match:
-            content = match.group("content")
-            if match.group("tag").startswith(f"{tag_start}/"):
-                raise Exception(f"Found end tag with no start `{match.group('tag')}`.")
-            if match.group("role") is not None and match.group("role") not in roles:
-                raise Exception(f"Unknown role `{match.group('role')}`.")
-            if content.strip():
-                messages.append({"role": default_role, "content": content.strip()})
-            text = text[match.span("tag")[1] :]  # noqa: E203
-            match_role = match.group("role")
-        if not text:
-            break
-        # now that we have defaulted any untagged text, we can handle the next tagged portion
-        match = re.search(rf"\s*.*?(?P<tag>{tag_start}/?(?P<role>.*?){tag_end}\s*)", text)
-        content = text[: match.span("tag")[0]]
-        if (match_role is not None and match.group("role") != match_role) or (not match.group("tag").startswith(f"{tag_start}/")):
-            raise Exception(f"Unclosed tag `{match_role}`. Found `{match.group('role')}`.")
-        messages.append({"role": match_role, "content": content.strip()})
-        text = text[match.span("tag")[1] :]  # noqa: E203
+    content = regex(r"([^%]+|\n(?!\s*%))+")
 
-    return messages
+    message = seq(tag_begin, content, tag_complete).map(lambda x: {'role': x[0][1], 'content': x[1]}) | content.map(lambda x: {'role': default_role, 'content': x})
+
+    message_parser = message.at_least(1)
+    return message_parser.parse(text)
 
 
 def strip_tags(

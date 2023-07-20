@@ -1,6 +1,6 @@
 """Base Constraint interface"""
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Coroutine
 
 if TYPE_CHECKING:
     from keymaker.models.base import Model
@@ -10,13 +10,12 @@ from keymaker.types import TokenConstraint
 
 class Constraint(ABC):
     @abstractmethod
-    def constrain_tokens(
+    async def constrain_tokens(
         self,
         base_text: str,
         completion_text: str,
         model: "Model",
-        state: Optional[Any] = None,
-    ) -> Tuple[TokenConstraint, Any]:
+    ) -> Coroutine[Any, Any, TokenConstraint]:
         """Constrain the token ids that can be sampled from the model's vocabulary.
 
             Args:
@@ -42,3 +41,8 @@ class Constraint(ABC):
         from keymaker.constraints.logical import AndConstraint
 
         return AndConstraint([self, other])
+    
+    def __invert__(self):
+        from keymaker.constraints.logical import NotConstraint
+
+        return NotConstraint(self)

@@ -1,26 +1,27 @@
 """The fundamental components of Keymaker Prompts and Completions"""
 import warnings
 from typing import Any, Awaitable, Callable, List, Optional
-
 from keymaker.constraints.base import Constraint
-from keymaker.models.base import Model
+from keymaker.models.base import ChatModel, Model
 from keymaker.types import Decoder
-
+import math
 
 class Completion(str):
-    """A completion string from a prompt
+    """A completion string generated from a prompt.
 
     Args:
-        text (str): the generated string
-        start (int): the start index of the completion in the prompt it came from
-        stop (int): the stop index of the completion in the prompt it came from
-        chunk (bool): whether the completion is part of a larger whole
+        text (str): The generated completion string.
+        start (int): The start index of the completion in the original prompt. 
+        stop (int): The stop index of the completion in the original prompt.
+        name (Optional[str]): A name for the completion.
+        chunk (bool): Whether the completion is part of a larger chunk.
+        score (Optional[float]): The score for the completion from the model.
 
     Returns:
-        Completion (str)
+        Completion: A string subclass with additional completion metadata.
     """
 
-    def __new__(cls, text: str, start: int, stop: int, name: Optional[str] = None, chunk: bool = False):
+    def __new__(cls, text: str, start: int, stop: int, name: Optional[str] = None, chunk: bool = False, score: Optional[float] = None):
         if isinstance(text, Completion):
             return text
         obj = str.__new__(cls, text)
@@ -28,10 +29,11 @@ class Completion(str):
         obj.stop = stop  # type: ignore
         obj.chunk = chunk  # type: ignore
         obj.name = name  # type: ignore
+        obj.score = score # type: ignore
         return obj
 
     def __repr__(self) -> str:
-        return f"Completion(text = '{self}', start = {self.start}, stop = {self.stop})"  # type: ignore
+        return f"Completion(text='{self}', start={self.start}, stop={self.stop}, name={self.name}, chunk={self.chunk}, score={self.score})"
 
 
 class Completions:
@@ -72,6 +74,16 @@ class Completions:
         else:
             raise TypeError(f"unsupported operand type(s) for |: 'Completions' and '{type(other).__name__}'")
 
+
+def add_logprob(logprobs_sum: Optional[float], *logprobs: Optional[float])->Optional[float]:
+    if logprobs_sum is None or None in logprobs:
+        return None
+    return logprobs_sum + sum(logprobs)
+
+def exp(x: Optional[float])->Optional[float]:
+    if x is None:
+        return None
+    return math.exp(x)
 
 class Prompt(str):
     """A Prompt is a piece of text a model can generate off of
@@ -126,7 +138,10 @@ class Prompt(str):
         stream: Optional[Callable[[Optional[Completion]], Awaitable[Any]]] = None,
         timeout: float = 10.0,
         truncate: bool = False,
+        try_first: Optional[bool] = None
     ):
+        if try_first is None:
+            try_first = isinstance(model, ChatModel)
         text = self.prompt  # type: ignore
         prompt_tokens = model.encode(self.prompt)  # type: ignore
         token_limit = min(max_tokens or 1_000_000_000, model.max_total_tokens - len(prompt_tokens))
@@ -145,10 +160,11 @@ class Prompt(str):
                 f"`max_total_tokens` {model.max_total_tokens}. "
                 f"will limit `max_tokens` to {token_limit}.",
             )
-
+        logprobs_sum = 0
         if constraint is None:
             generated = ""
-            async for tok in model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):  # type: ignore
+            async for tok, logprob in model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):  # type: ignore
+                logprobs_sum = add_logprob(logprobs_sum, *logprob)
                 if stream:
                     await stream(
                         Completion(
@@ -157,8 +173,10 @@ class Prompt(str):
                             len(self.prompt) + len(generated) + len(tok),  # type: ignore
                             name,
                             True,
+                            exp(logprobs_sum)
                         ),
                     )
+                
                 generated += tok
             if stream:
                 await stream(None)
@@ -169,6 +187,8 @@ class Prompt(str):
                     len(self.prompt),  # type: ignore
                     len(self.prompt) + len(generated),  # type: ignore
                     name,
+                    False,
+                    exp(logprobs_sum)
                 ),
                 name,
             )
@@ -176,74 +196,94 @@ class Prompt(str):
 
         token_count = 0
         partial_completion = ""
-        prompt_plus_completion = text[:]
-        gen_tokens = []
-        buffer_tokens: List[int] = []
-        constraint_state = None
+        buffer_tokens: List[str] = []
+        buffer_logprobs: List[float] = []
+        token = ""
+        free_attempt = try_first
+        async def send_stream(text: str, chunk: bool = False):
+            if stream:
+                await stream(
+                    Completion(
+                        text,
+                        len(text) + len(partial_completion),  # type: ignore
+                        len(text) + len(partial_completion) + len(text),  # type: ignore
+                        name,
+                        chunk,
+                        exp(logprobs_sum)
+                    ),
+                )
         while token_count < token_limit:
-            token = None
-            generation = None
-
-            selected_token_ids, constraint_state = constraint.constrain_tokens(text, partial_completion, model, constraint_state)
-
+            selected_token_ids = await constraint.constrain_tokens(text, partial_completion, model)
+            
             if selected_token_ids:
                 # if the selected tokens have the same number than the vocab size, there's no real restriction
                 selected_token_ids = None if len(selected_token_ids) >= model.vocab_size else selected_token_ids
+                
             if isinstance(selected_token_ids, set) and len(selected_token_ids) == 0:
                 warnings.warn(f"Empty token mask encountered with Constraint `{constraint}`. Ending completion.")
                 break
 
+            # constraints return strings when they are finished 
+            # to explictly suggest the completion
             if isinstance(selected_token_ids, str):
                 partial_completion = selected_token_ids
                 break
+            generated_tokens, logprobs = await model.sample(
+                text+partial_completion,
+                selected_tokens=None if free_attempt else selected_token_ids,
+                decoder=decoder,
+                timeout=timeout,
+            )
 
-            if isinstance(selected_token_ids, set) and len(selected_token_ids) == 1:
-                token = list(selected_token_ids)[0]
-                buffer_tokens = buffer_tokens[1:]
-            # try to use our buffer tokens if any
-            elif buffer_tokens and ((selected_token_ids is None) or (buffer_tokens[0] in selected_token_ids)):
-                token = buffer_tokens[0]
-                buffer_tokens = buffer_tokens[1:]
-            else:
-                buffer_tokens = []
-
-            if token is None:
-                generated_tokens = await model.sample(
-                    prompt_plus_completion,
-                    selected_tokens=selected_token_ids,
-                    decoder=decoder,
-                    timeout=timeout,
-                )
-
-                if not generated_tokens:
-                    break
-                gen_tokens = [model.encode(tok)[0] for tok in generated_tokens if tok]
-
-                if not gen_tokens:
-                    break
-
-                token = gen_tokens[0]
-                # in case sampling gave us extra tokens (e.g. sample chunk size of the model is more than 1 like for openai chat models)
-                if len(gen_tokens) > 1:
-                    buffer_tokens = gen_tokens[1:]
-
-            if model.eos_token_id == token:
+            if not generated_tokens:
                 break
-            generation = model.decode([token])
+            
+            token = generated_tokens[0]
 
-            if stream:
-                await stream(
-                    Completion(
-                        generation,
-                        len(self.prompt) + len(partial_completion),  # type: ignore
-                        len(self.prompt) + len(partial_completion) + len(generation),  # type: ignore
-                        name,
-                        True,
-                    ),
-                )
-            partial_completion += generation
-            prompt_plus_completion = text + partial_completion
-            token_count += 1
+            # token generated according to constraint is already good
+            if not free_attempt:
+                partial_completion+=token
+                buffer_tokens = generated_tokens[1:]
+                buffer_logprobs = logprobs[1:]
+                logprobs_sum=add_logprob(logprobs_sum, logprobs[0])
+                await send_stream(token, True)
+                token_count+=1
+            else: # tried but need to validate token
+                token_id = model.encode(token)[0]
+                if selected_token_ids is None or token_id in selected_token_ids:
+                    partial_completion+=token
+                    buffer_tokens = generated_tokens[1:]
+                    buffer_logprobs = logprobs[1:]
+                    logprobs_sum=add_logprob(logprobs_sum, logprobs[0])
+                    free_attempt = True # will be allowed to try again next round
+                    await send_stream(token, True)
+                    token_count+=1
+                else:
+                    free_attempt = False
+
+            # if there is a buffer, validate it
+            end_completion = False
+            for i, (token, bl) in enumerate(zip(buffer_tokens, buffer_logprobs)):
+                selected_token_ids = await constraint.constrain_tokens(text, partial_completion+token, model)
+                if isinstance(selected_token_ids, str):
+                    partial_completion = selected_token_ids
+                    token_count = len(model.encode(partial_completion))
+                    end_completion=True
+                    break
+                elif selected_token_ids != set():
+                    await send_stream(token, True)
+                    partial_completion += token
+                    token_count += 1
+                else:
+                    break
+                
+
+                           
+            buffer_tokens=[]
+            buffer_logprobs=[]
+
+            if end_completion:
+                break
 
         if stream:
             await stream(None)
@@ -255,6 +295,8 @@ class Prompt(str):
                 len(self.prompt),  # type: ignore
                 len(self.prompt) + len(partial_completion),  # type: ignore
                 name,
+                False, 
+                exp(logprobs_sum)
             ),
             name,
         )

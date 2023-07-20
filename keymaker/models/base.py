@@ -1,6 +1,6 @@
 """Base model interface"""
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, ClassVar, FrozenSet, List, Optional, Set
+from typing import AsyncGenerator, ClassVar, FrozenSet, List, Optional, Set, Tuple
 
 from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
 
@@ -44,7 +44,7 @@ class Model(ABC):
         selected_tokens: Optional[SelectedTokens] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
-    ) -> List[str]:
+    ) -> Tuple[List[str], List[float]]:
         """Sample from the language model given the input text and the selected tokens to constrain the sampling.
 
         Args:
@@ -61,10 +61,11 @@ class Model(ABC):
             decoder=decoder,
             timeout=timeout,
         )
-        ret = []
-        async for tok in gen:  # type: ignore
+        ret, probs = [], []
+        async for tok, prob in gen:  # type: ignore
             ret.append(tok)
-        return ret
+            probs+=prob
+        return ret, probs
 
     @abstractmethod
     def encode(self, text: str) -> TokenIds:
@@ -102,3 +103,6 @@ class Model(ABC):
     @abstractmethod
     def bos_token_id(self) -> int:
         """Get the token id of the beginning of sequence (bos) token."""
+
+class ChatModel(Model):
+    """Base model for chat based models"""
