@@ -134,5 +134,6 @@ class LlamaCpp(Model):
             delta = chunk['choices'][0]
             if delta['text']=="":
                 break
-            logprob = delta['logprobs']['token_logprobs'] if delta['logprobs'] else [0]
-            yield delta['text'], logprob
+            token = delta['text']
+            logprob = delta['logprobs']['top_logprobs'][0][token] if delta['logprobs'] else [0]
+            yield token, [logprob]
