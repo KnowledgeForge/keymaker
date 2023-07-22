@@ -1,10 +1,14 @@
 """The fundamental components of Keymaker Prompts and Completions"""
+from dataclasses import asdict, dataclass
 import warnings
-from typing import Any, Awaitable, Callable, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import ChatModel, Model
 from keymaker.types import Decoder
 import math
+from keymaker.utils.general import noop, add_logprob, exp
+from keymaker.utils.formatted_completion import format_parser
+
 
 class Completion(str):
     """A completion string generated from a prompt.
@@ -25,15 +29,21 @@ class Completion(str):
         if isinstance(text, Completion):
             return text
         obj = str.__new__(cls, text)
-        obj.start = start  # type: ignore
-        obj.stop = stop  # type: ignore
-        obj.chunk = chunk  # type: ignore
-        obj.name = name  # type: ignore
-        obj.score = score # type: ignore
         return obj
+
+    def __init__(self, text: str, start: int, stop: int, name: Optional[str] = None, chunk: bool = False, score: Optional[float] = None):
+        self.start = start  
+        self.stop = stop  
+        self.chunk = chunk  
+        self.name = name  
+        self.score = score  
 
     def __repr__(self) -> str:
         return f"Completion(text='{self}', start={self.start}, stop={self.stop}, name={self.name}, chunk={self.chunk}, score={self.score})"
+
+    def map(self, fn: Callable[[str], str]) -> "Completion":
+        mapped = str(fn(self))
+        return Completion(mapped, self.start, self.start+len(mapped), self.chunk, self.name, self.score)
 
 
 class Completions:
@@ -60,7 +70,8 @@ class Completions:
         if name in self._named_completions:
             return self._named_completions[name]
         else:
-            raise AttributeError(f"'Completions' object has no attribute '{name}'")
+            raise AttributeError(
+                f"'Completions' object has no attribute '{name}'")
 
     def __or__(self, other):
         if isinstance(other, Completions):
@@ -72,18 +83,40 @@ class Completions:
             }
             return combined
         else:
-            raise TypeError(f"unsupported operand type(s) for |: 'Completions' and '{type(other).__name__}'")
+            raise TypeError(
+                f"unsupported operand type(s) for |: 'Completions' and '{type(other).__name__}'")
 
 
-def add_logprob(logprobs_sum: Optional[float], *logprobs: Optional[float])->Optional[float]:
-    if logprobs_sum is None or None in logprobs:
-        return None
-    return logprobs_sum + sum(logprobs)
-
-def exp(x: Optional[float])->Optional[float]:
-    if x is None:
-        return None
-    return math.exp(x)
+@dataclass
+class CompletionConfig:
+    model: Optional[Model] = None
+    constraint: Optional[Constraint] = None
+    name: Optional[str] = None
+    max_tokens: Optional[int] = None
+    decoder: Optional[Decoder] = None
+    stream: Optional[Callable[[Optional['Completion']], Awaitable[Any]]] = None
+    map_fn: Callable[[str], str] = noop
+    timeout: float = 10.0
+    truncate: bool = False
+    try_first: Optional[bool] = None
+    
+    def __or__(self, other):
+        if isinstance(other, CompletionConfig):
+            combined = CompletionConfig()
+            combined.model = self.model or other.model 
+            combined.constraint = self.constraint or other.constraint 
+            combined.name = self.name or other.name 
+            combined.max_tokens = self.max_tokens or other.max_tokens 
+            combined.decoder = self.decoder or other.decoder 
+            combined.stream = self.stream or other.stream 
+            combined.map_fn = self.map_fn or other.map_fn 
+            combined.timeout = self.timeout or other.timeout 
+            combined.truncate = self.truncate or other.truncate 
+            combined.try_first = self.try_first or other.try_first
+            return combined
+        else:
+            raise TypeError(
+                f"unsupported operand type(s) for |: 'CompletionConfig' and '{type(other).__name__}'")
 
 class Prompt(str):
     """A Prompt is a piece of text a model can generate off of
@@ -95,62 +128,122 @@ class Prompt(str):
         Prompt (str)
     """
 
-    def __new__(cls, prompt: str, completions: Optional[Completions] = None):
+    def __new__(cls, prompt: str, completions: Optional[Completions] = None, *default_args, **default_kwargs):
         if isinstance(prompt, Prompt):
             return prompt
         obj = str.__new__(cls, prompt)
-        obj.prompt = prompt  # type: ignore
-        obj.completions = completions or Completions()  # type: ignore
         return obj
-
+    
+    def __init__(self, prompt: str, *default_args, completions: Optional[Completions] = None, **default_kwargs):
+        self.prompt = prompt
+        self.completions = completions or Completions()
+        if 'completion_config' in default_kwargs:
+            self._default_completion_config = default_kwargs['completion_config']
+        else:
+            self._default_completion_config = CompletionConfig(*default_args, **default_kwargs)
+        
     def __repr__(self):
-        return f"Prompt('{self.prompt}')"  # type: ignore
+        return f"Prompt('{self.prompt}')"
 
     def __str__(self):
         return self.prompt
 
     def __add__(self, other):
+        if isinstance(other, Prompt):
+            return Prompt(self.prompt + other.prompt, completions=self.completions | other.completions, completion_config=self._default_completion_config|other._default_completion_config)
         if isinstance(other, str):
-            return Prompt(self.prompt + other, self.completions)  # type: ignore
-        elif isinstance(other, Prompt):
-            return Prompt(self.prompt + other.prompt, self.completions | other.completions)  # type: ignore
-        else:
-            raise TypeError(f"Cannot concatenate Prompt object with object of type {type(other)}")
+            return Prompt(self.prompt + other, completions=self.completions, completion_config=self._default_completion_config)
+        raise TypeError(
+            f"Cannot concatenate Prompt with object of type {type(other)}.")
 
     def __radd__(self, other):
+        if isinstance(other, Prompt):
+            return Prompt(other.prompt + self.prompt, completions=self.completions | other.completions, completion_config=self._default_completion_config|other._default_completion_config)
         if isinstance(other, str):
-            return Prompt(other + self.prompt, self.completions)  # type: ignore
-        elif isinstance(other, Prompt):
-            return Prompt(other.prompt + self.prompt, self.completions | other.completions)  # type: ignore
-        else:
-            raise TypeError(f"Cannot concatenate object of type {type(other)} with Prompt object")
-
+            return Prompt(other + self.prompt, completions=self.completions, completion_config=self._default_completion_config)
+        raise TypeError(
+            f"Cannot concatenate object of type {type(other)} with Prompt.")
+        
+    def __getitem__(self, key):
+        return Prompt(super().__getitem__(key), completions=self.completions, completion_config=self._default_completion_config)
+    
     def token_length(self, model: Model) -> int:
-        return len(model.encode(self.prompt))  # type: ignore
+        return len(model.encode(self.prompt))
+
+    async def format(
+        self,
+        *args,
+        **kwargs
+    ) -> "Prompt":
+        formattings = format_parser(self)
+        prompt = self[:0]
+        unnamed_index = 0
+        for part in formattings:
+            if isinstance(part, str):
+                prompt+=part
+                continue
+            name = part.name
+            if name is None:
+                config = args[unnamed_index]
+                unnamed_index+=1
+            else:
+                config = kwargs[name]
+                
+            if isinstance(config, CompletionConfig):
+                config.name=name if name is not None else config.name
+                prompt = await prompt.complete(completion_config=config)
+            else:
+                addition = str(config)
+                if self._default_completion_config.stream:
+                    Completion(
+                        addition,
+                        len(prompt),
+                        len(prompt) + len(addition),
+                        None,
+                        False,
+                        1.0
+                    )
+                prompt+=addition
+        return prompt
 
     async def complete(
         self,
-        model: Model,
-        constraint: Optional[Constraint] = None,
-        name: Optional[str] = None,
-        max_tokens: Optional[int] = None,
-        decoder: Optional[Decoder] = None,
-        stream: Optional[Callable[[Optional[Completion]], Awaitable[Any]]] = None,
-        timeout: float = 10.0,
-        truncate: bool = False,
-        try_first: Optional[bool] = None
-    ):
+        *completion_args,
+        **completion_kwargs
+    ) -> "Prompt":
+        if 'completion_config' in completion_kwargs:
+            config = completion_kwargs['completion_config']
+        else:
+            config = CompletionConfig(*completion_args, **completion_kwargs)
+        config = config | self._default_completion_config
+        
+        model = config.model
+        constraint = config.constraint
+        name = config.name
+        max_tokens = config.max_tokens
+        decoder = config.decoder
+        stream = config.stream
+        map_fn = config.map_fn
+        timeout = config.timeout 
+        truncate = config.truncate
+        try_first = config.try_first 
+
+        if model is None:
+            raise ValueError("A model is required for completion")
+        
+        ret = self[:]
         if try_first is None:
             try_first = isinstance(model, ChatModel)
-        text = self.prompt  # type: ignore
-        prompt_tokens = model.encode(self.prompt)  # type: ignore
-        token_limit = min(max_tokens or 1_000_000_000, model.max_total_tokens - len(prompt_tokens))
+        text = self.prompt  
+        prompt_tokens = model.encode(self.prompt)  
+        token_limit = min(max_tokens or 1_000_000_000,
+                          model.max_total_tokens - len(prompt_tokens))
         if truncate and (len(prompt_tokens) + (max_tokens or 0)) >= model.max_total_tokens:
             warnings.warn(
                 f"Prompt plus `max_tokens` more than model `max_total_tokens` of {model.max_total_tokens}."
                 "Truncating from right.",
             )
-            text = model.decode(prompt_tokens[-(model.max_total_tokens - token_limit) :])  # noqa: E203
+            text = model.decode(prompt_tokens[-(model.max_total_tokens - token_limit):])  # noqa: E203
 
         if max_tokens is not None and max_tokens > token_limit:
             warnings.warn(
@@ -163,35 +256,38 @@ class Prompt(str):
         logprobs_sum = 0
         if constraint is None:
             generated = ""
-            async for tok, logprob in model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):  # type: ignore
+            
+            async for tok, logprob in model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):
                 logprobs_sum = add_logprob(logprobs_sum, *logprob)
                 if stream:
                     await stream(
                         Completion(
                             tok,
-                            len(self.prompt) + len(generated),  # type: ignore
-                            len(self.prompt) + len(generated) + len(tok),  # type: ignore
+                            len(self.prompt) + len(generated),  
+                            len(self.prompt) + len(generated) + \
+                            len(tok),  
                             name,
                             True,
-                            exp(logprobs_sum)
+                            exp(add_logprob(0, *logprob))
                         ),
                     )
-                
+
                 generated += tok
             if stream:
                 await stream(None)
-            ret = self + generated
-            ret.completions.add(  # type: ignore
-                Completion(
+            
+            completion = map_fn(Completion(
                     generated,
-                    len(self.prompt),  # type: ignore
-                    len(self.prompt) + len(generated),  # type: ignore
+                    len(self.prompt),  
+                    len(self.prompt) + len(generated),  
                     name,
                     False,
                     exp(logprobs_sum)
-                ),
-                name,
-            )
+                ))
+            
+            ret.completions.add(completion, name)  
+                
+            ret = self + completion
             return ret
 
         token_count = 0
@@ -200,30 +296,33 @@ class Prompt(str):
         buffer_logprobs: List[float] = []
         token = ""
         free_attempt = try_first
-        async def send_stream(text: str, chunk: bool = False):
+
+        async def send_stream(text: str, chunk: bool = False, logprobs: Optional[float]=None):
             if stream:
                 await stream(
                     Completion(
                         text,
-                        len(text) + len(partial_completion),  # type: ignore
-                        len(text) + len(partial_completion) + len(text),  # type: ignore
+                        len(text) + len(partial_completion),  
+                        len(text) + len(partial_completion) + \
+                        len(text),  
                         name,
                         chunk,
-                        exp(logprobs_sum)
+                        exp(logprobs)
                     ),
                 )
         while token_count < token_limit:
             selected_token_ids = await constraint.constrain_tokens(text, partial_completion, model)
-            
+
             if selected_token_ids:
                 # if the selected tokens have the same number than the vocab size, there's no real restriction
                 selected_token_ids = None if len(selected_token_ids) >= model.vocab_size else selected_token_ids
-                
+
             if isinstance(selected_token_ids, set) and len(selected_token_ids) == 0:
-                warnings.warn(f"Empty token mask encountered with Constraint `{constraint}`. Ending completion.")
+                warnings.warn(
+                    f"Empty token mask encountered with Constraint `{constraint}`. Ending completion.")
                 break
 
-            # constraints return strings when they are finished 
+            # constraints return strings when they are finished
             # to explictly suggest the completion
             if isinstance(selected_token_ids, str):
                 partial_completion = selected_token_ids
@@ -237,27 +336,27 @@ class Prompt(str):
 
             if not generated_tokens:
                 break
-            
+
             token = generated_tokens[0]
 
             # token generated according to constraint is already good
             if not free_attempt:
-                partial_completion+=token
+                partial_completion += token
                 buffer_tokens = generated_tokens[1:]
                 buffer_logprobs = logprobs[1:]
-                logprobs_sum=add_logprob(logprobs_sum, logprobs[0])
-                await send_stream(token, True)
-                token_count+=1
-            else: # tried but need to validate token
+                logprobs_sum = add_logprob(logprobs_sum, logprobs[0])
+                await send_stream(token, True, add_logprob(0, logprobs[0]))
+                token_count += 1
+            else:  # tried but need to validate token
                 token_id = model.encode(token)[0]
                 if selected_token_ids is None or token_id in selected_token_ids:
-                    partial_completion+=token
+                    partial_completion += token
                     buffer_tokens = generated_tokens[1:]
                     buffer_logprobs = logprobs[1:]
-                    logprobs_sum=add_logprob(logprobs_sum, logprobs[0])
-                    free_attempt = True # will be allowed to try again next round
-                    await send_stream(token, True)
-                    token_count+=1
+                    logprobs_sum = add_logprob(logprobs_sum, logprobs[0])
+                    free_attempt = True  # will be allowed to try again next round
+                    await send_stream(token, True, add_logprob(0, logprobs[0]))
+                    token_count += 1
                 else:
                     free_attempt = False
 
@@ -268,19 +367,17 @@ class Prompt(str):
                 if isinstance(selected_token_ids, str):
                     partial_completion = selected_token_ids
                     token_count = len(model.encode(partial_completion))
-                    end_completion=True
+                    end_completion = True
                     break
                 elif selected_token_ids != set():
-                    await send_stream(token, True)
+                    await send_stream(token, True, add_logprob(0, bl))
                     partial_completion += token
                     token_count += 1
                 else:
                     break
-                
 
-                           
-            buffer_tokens=[]
-            buffer_logprobs=[]
+            buffer_tokens = []
+            buffer_logprobs = []
 
             if end_completion:
                 break
@@ -288,17 +385,16 @@ class Prompt(str):
         if stream:
             await stream(None)
 
-        ret = self + partial_completion
-        ret.completions.add(  # type: ignore
-            Completion(
+        completion = map_fn(Completion(
                 partial_completion,
-                len(self.prompt),  # type: ignore
-                len(self.prompt) + len(partial_completion),  # type: ignore
+                len(self.prompt),  
+                len(self.prompt) + len(partial_completion),  
                 name,
-                False, 
+                False,
                 exp(logprobs_sum)
-            ),
-            name,
-        )
-
+            ))
+        
+        ret.completions.add(completion, name)  
+            
+        ret = self + completion
         return ret

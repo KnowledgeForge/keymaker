@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Coroutine, Dict, List, Optional, Set, Tuple, FrozenSet
+from typing import TYPE_CHECKING, Any, Coroutine, Dict, List, Optional, Set, Tuple, FrozenSet, Union
 
 import regex as re
 from parsy import Parser, ParseError
@@ -8,8 +8,14 @@ from parsy import Parser, ParseError
 from keymaker.constraints.base import Constraint
 from keymaker.types import TokenConstraint
 
+try:
+    from lark import Lark
+except ImportError:
+    Lark = None
+
 if TYPE_CHECKING:
     from keymaker.models.base import Model
+
 
 
 @dataclass
@@ -24,9 +30,21 @@ class ParserConstraint(Constraint):
 
     """
 
-    parser: Optional[Parser] = None
+    parser: Optional[Union[Parser, "Lark"]] = None
     terminate_on_parse: bool = True
     ignore_pattern: str = r"\s*"
+
+    def __post_init__(self):
+        self._terminal_regexes = None
+        if Lark is not None and isinstance(self.parser, Lark):
+            self._extract_terminal_regex()
+            
+    def _extract_terminal_regex(self):
+        regex_map = {}
+        for term in parser.terminals:  # type: ignore
+            if term.pattern:
+                regex_map[term.name] = re.compile(term.pattern.to_regexp())
+        self._terminal_regexes = regex_map
 
     def _is_valid_token(self, patterns: List[re.Pattern[str]], token_id: int, partial_completion: str, model: "Model") -> bool:
         poss_completion = partial_completion + model.tokens[token_id]
@@ -38,7 +56,7 @@ class ParserConstraint(Constraint):
         except Exception:
             return re.compile(self.ignore_pattern+re.escape(pattern)+self.ignore_pattern)
     
-    async def constrain_tokens(
+    async def _constrain_tokens_parsy(
         self,
         base_text: str,
         completion_text: str,
@@ -70,6 +88,60 @@ class ParserConstraint(Constraint):
                 ),
             )
         return valid_token_ids
+
+
+    async def _constrain_tokens_lark(
+        self,
+        base_text: str,
+        completion_text: str,
+        model: "Model",
+    ) -> Coroutine[Any, Any, TokenConstraint]:
+        import pdb; pdb.set_trace()
+        # find what rules from the parser are valid next
+        try:
+            parser.parse(input_str)  # type: ignore
+        except UnexpectedInput as e:
+            ret = set()
+            try:
+                ret |= set(e.expected)
+            except AttributeError:
+                pass
+            try:
+                ret |= set(e.allowed)
+            except AttributeError:
+                pass
+            return ret
+        return set()
+
+        if len(valid_next_lex) == 0:
+            return set(), None
+        if len(valid_next_lex) == 1 and '$END' in valid_next_lex:
+            return completion_text, None
+
+        last_lex = state['last_lex'] if state else set()
+        start_idx = state['start_idx'] if state else 0
+
+        # strip that last lex if there is a match
+        # our parser regex patterns only tell us the next completion pattern
+        # and cannot be complete of what we have already selected
+        for lex in last_lex:
+            if self.terminal_regexes[lex].fullmatch(completion_text[start_idx:]):
+                start_idx = len(completion_text)
+                last_lex = set()
+                break
+
+        regex_pattern = [self.terminal_regexes[t] for t in valid_next_lex | last_lex]
+
+        with ThreadPoolExecutor():
+            valid_token_ids = set(
+                filter(
+                    lambda token_id: self._is_valid_token(regex_pattern, token_id, completion_text[start_idx:], model),
+                    model.tokens.keys(),
+                ),
+            )
+
+        return valid_token_ids
+
 
 ### LARK BASED
 # from lark import Lark, UnexpectedInput
