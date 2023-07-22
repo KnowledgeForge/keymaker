@@ -32,7 +32,8 @@ class StopsConstraint(Constraint):
     ) -> Coroutine[Any, Any, TokenConstraint]:
         match = self._pattern.search(completion_text)
         if match:
+            import pdb; pdb.set_trace()
             if not self.include:
-                return match.group('completion')
-            return match.group('completion') + match.group('stop')
+                return completion_text
+            return completion_text + match.group('stop')
         return None

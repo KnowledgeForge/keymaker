@@ -188,12 +188,20 @@ class Prompt(str):
                 unnamed_index+=1
             else:
                 config = kwargs[name]
-                
+            addition = None
             if isinstance(config, CompletionConfig):
                 config.name=name if name is not None else config.name
                 prompt = await prompt.complete(completion_config=config)
+            elif callable(config):
+                config = config(prompt)
+                if isinstance(config, CompletionConfig):
+                    config.name=name if name is not None else config.name
+                    prompt = await prompt.complete(completion_config=config)
+                else:
+                    addition = str(config)
             else:
                 addition = str(config)
+            if addition is not None:
                 if self._default_completion_config.stream:
                     Completion(
                         addition,
