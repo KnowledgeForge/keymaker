@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Coroutine, List, Optional, Union
 
 import regex as re
+from keymaker.models.base import Model
 from parsy import ParseError, Parser
 
 from keymaker.constraints.base import Constraint
@@ -87,59 +88,64 @@ class ParserConstraint(Constraint):
             )
         return valid_token_ids
 
-    async def _constrain_tokens_lark(
-        self,
-        base_text: str,
-        completion_text: str,
-        model: "Model",
-    ) -> Coroutine[Any, Any, TokenConstraint]:
-        import pdb
+    # async def _constrain_tokens_lark(
+    #     self,
+    #     base_text: str,
+    #     completion_text: str,
+    #     model: "Model",
+    # ) -> Coroutine[Any, Any, TokenConstraint]:
+    #     import pdb
 
-        pdb.set_trace()
-        # find what rules from the parser are valid next
-        try:
-            parser.parse(input_str)  # type: ignore
-        except UnexpectedInput as e:
-            ret = set()
-            try:
-                ret |= set(e.expected)
-            except AttributeError:
-                pass
-            try:
-                ret |= set(e.allowed)
-            except AttributeError:
-                pass
-            return ret
-        return set()
+    #     pdb.set_trace()
+    #     # find what rules from the parser are valid next
+    #     try:
+    #         parser.parse(input_str)  # type: ignore
+    #     except UnexpectedInput as e:
+    #         ret = set()
+    #         try:
+    #             ret |= set(e.expected)
+    #         except AttributeError:
+    #             pass
+    #         try:
+    #             ret |= set(e.allowed)
+    #         except AttributeError:
+    #             pass
+    #         return ret
+    #     return set()
 
-        if len(valid_next_lex) == 0:
-            return set(), None
-        if len(valid_next_lex) == 1 and '$END' in valid_next_lex:
-            return completion_text, None
+    #     if len(valid_next_lex) == 0:
+    #         return set(), None
+    #     if len(valid_next_lex) == 1 and '$END' in valid_next_lex:
+    #         return completion_text, None
 
-        last_lex = state['last_lex'] if state else set()
-        start_idx = state['start_idx'] if state else 0
+    #     last_lex = state['last_lex'] if state else set()
+    #     start_idx = state['start_idx'] if state else 0
 
-        # strip that last lex if there is a match
-        # our parser regex patterns only tell us the next completion pattern
-        # and cannot be complete of what we have already selected
-        for lex in last_lex:
-            if self.terminal_regexes[lex].fullmatch(completion_text[start_idx:]):
-                start_idx = len(completion_text)
-                last_lex = set()
-                break
+    #     # strip that last lex if there is a match
+    #     # our parser regex patterns only tell us the next completion pattern
+    #     # and cannot be complete of what we have already selected
+    #     for lex in last_lex:
+    #         if self.terminal_regexes[lex].fullmatch(completion_text[start_idx:]):
+    #             start_idx = len(completion_text)
+    #             last_lex = set()
+    #             break
 
-        regex_pattern = [self.terminal_regexes[t] for t in valid_next_lex | last_lex]
+    #     regex_pattern = [self.terminal_regexes[t] for t in valid_next_lex | last_lex]
 
-        with ThreadPoolExecutor():
-            valid_token_ids = set(
-                filter(
-                    lambda token_id: self._is_valid_token(regex_pattern, token_id, completion_text[start_idx:], model),
-                    model.tokens.keys(),
-                ),
-            )
+    #     with ThreadPoolExecutor():
+    #         valid_token_ids = set(
+    #             filter(
+    #                 lambda token_id: self._is_valid_token(regex_pattern, token_id, completion_text[start_idx:], model),
+    #                 model.tokens.keys(),
+    #             ),
+    #         )
 
-        return valid_token_ids
+    #     return valid_token_ids
+
+    async def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> Coroutine[Any, Any, Coroutine[Any, Any, TokenConstraint]]:
+        if isinstance(self.parser, Parser):
+            return await self._constrain_tokens_parsy(base_text, completion_text, model)
+        return await self._constrain_tokens_lark(base_text, completion_text, model)
 
 
 ### LARK BASED
