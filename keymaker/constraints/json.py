@@ -1,22 +1,18 @@
 """A parse constraint which gives correct JSON"""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Coroutine, Optional, Set
+from typing import Any, Coroutine, Optional, Set
+
+from parsy import alt, forward_declaration, regex, seq, string
 
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
 from keymaker.types import TokenConstraint
 
-if TYPE_CHECKING:
-    from keymaker.models.base import Model
-
-from parsy import alt, forward_declaration, regex, seq, string
-
-
 # parser derived from parsy example
 # Utilities
 whitespace = regex(r"\s+")
-optional_whitespace = lambda p: p | (whitespace >> p) | (p << whitespace)
+optional_whitespace = lambda p: p | (whitespace >> p) | (p << whitespace)  # noqa: E731
 
 # Punctuation
 lbrace = optional_whitespace(string("{"))
@@ -87,6 +83,7 @@ class JsonConstraint(Constraint):
         json_doc = json_value
 
         from keymaker.constraints import ParserConstraint
+
         self.constraint = ParserConstraint(parser=json_doc)
 
     async def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> Coroutine[Any, Any, TokenConstraint]:

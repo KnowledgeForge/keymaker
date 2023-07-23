@@ -37,10 +37,13 @@ class RegexConstraint(Constraint):
         completion_text: str,
         model: "Model",
     ) -> Coroutine[Any, Any, TokenConstraint]:
-        if self.terminate_on_match:
-            m = self._pattern.match(completion_text)
-            if m and m.start() == 0:
-                return completion_text[: m.end()]
+        add_eos = False
+        match = self._pattern.match(completion_text)
+        if match and match.start() == 0:
+            if self.terminate_on_match:
+                return completion_text[: match.end()]
+            else:
+                add_eos = True
 
         with ThreadPoolExecutor():
             valid_token_ids = set(
@@ -49,5 +52,6 @@ class RegexConstraint(Constraint):
                     model.tokens.keys(),
                 ),
             )
-
+        if add_eos:
+            valid_token_ids.add(model.eos_token_id)
         return valid_token_ids

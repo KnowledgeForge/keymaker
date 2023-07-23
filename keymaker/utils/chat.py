@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING, Dict, FrozenSet, List
 
-import regex as re
-
 if TYPE_CHECKING:
     from keymaker import Prompt
 

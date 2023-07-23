@@ -5,7 +5,6 @@ from functools import lru_cache
 from typing import Any, AsyncGenerator, Dict, FrozenSet, Optional
 
 import aiohttp
-import numpy as np
 import openai
 import tiktoken
 from tiktoken import Encoding

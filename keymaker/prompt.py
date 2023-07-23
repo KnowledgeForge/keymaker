@@ -1,6 +1,6 @@
 """The fundamental components of Keymaker Prompts and Completions"""
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Dict, Generator, List, Optional, Union
 
 from keymaker.constraints.base import Constraint
@@ -8,6 +8,7 @@ from keymaker.models.base import ChatModel, Model
 from keymaker.types import Decoder, FormatArg, Stringable
 from keymaker.utils.formatted_completion import format_parser
 from keymaker.utils.general import add_logprob, anoop, exp, noop
+
 
 class Completion(str):
     """A completion string generated from a prompt.
@@ -23,26 +24,50 @@ class Completion(str):
     Returns:
         Completion: A string subclass with additional completion metadata.
     """
-    def __new__(cls, value: Stringable, start: int, stop: Optional[int] = None, name: Optional[str] = None, chunk: bool = False, score: Optional[float] = None):
+
+    def __new__(
+        cls,
+        value: Stringable,
+        start: int,
+        stop: Optional[int] = None,
+        name: Optional[str] = None,
+        chunk: bool = False,
+        score: Optional[float] = None,
+    ):
         if isinstance(value, Completion):
             return value
         obj = str.__new__(cls, str(value))
         return obj
 
-    def __init__(self, value: Stringable, start: int,  stop: Optional[int] = None, name: Optional[str] = None, chunk: bool = False, score: Optional[float] = None):
+    def __init__(
+        self,
+        value: Stringable,
+        start: int,
+        stop: Optional[int] = None,
+        name: Optional[str] = None,
+        chunk: bool = False,
+        score: Optional[float] = None,
+    ):
         self.value = value
-        self.start = start  
-        self.stop = stop or (start+len(self))
-        self.chunk = chunk  
-        self.name = name  
-        self.score = score  
-    
+        self.start = start
+        self.stop = stop or (start + len(self))
+        self.chunk = chunk
+        self.name = name
+        self.score = score
+
     def __repr__(self) -> str:
         return f"Completion(text='{self}', value=`{self.value}`, start={self.start}, stop={self.stop}, name={self.name}, chunk={self.chunk}, score={self.score})"
 
     def map(self, fn: Callable[["Completion"], Stringable]) -> "Completion":
         mapped = fn(self)
-        return Completion(value=mapped, start=self.start, stop=self.start + len(str(mapped)), chunk = self.chunk, name=self.name, score = self.score)
+        return Completion(
+            value=mapped,
+            start=self.start,
+            stop=self.start + len(str(mapped)),
+            chunk=self.chunk,
+            name=self.name,
+            score=self.score,
+        )
 
 
 class Completions:
@@ -290,9 +315,9 @@ class Prompt(str):
             if stream:
                 await stream(None)
 
-            completion = map_fn(
-                Completion(generated, len(self.prompt), len(self.prompt) + len(generated), name, False, exp(logprobs_sum)),
-            )
+            completion = Completion(
+                generated, len(self.prompt), len(self.prompt) + len(generated), name, False, exp(logprobs_sum),
+            ).map(map_fn)
 
             ret.completions.add(completion, name)
 
@@ -310,7 +335,7 @@ class Prompt(str):
             if stream:
                 await stream(
                     Completion(
-                        value = value,
+                        value=value,
                         start=len(text) + len(partial_completion),
                         stop=None,
                         name=name,
@@ -393,16 +418,14 @@ class Prompt(str):
         if stream:
             await stream(None)
 
-        completion = map_fn(
-            Completion(
-                value=partial_completion,
-                start=len(self.prompt),
-                stop=len(self.prompt) + len(partial_completion),
-                name=name,
-                chunk=False,
-                score=exp(logprobs_sum),
-            ),
-        )
+        completion = Completion(
+            value=partial_completion,
+            start=len(self.prompt),
+            stop=len(self.prompt) + len(partial_completion),
+            name=name,
+            chunk=False,
+            score=exp(logprobs_sum),
+        ).map(map_fn)
 
         ret.completions.add(completion, name)
 

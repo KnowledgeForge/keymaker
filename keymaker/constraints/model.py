@@ -3,8 +3,6 @@
 from dataclasses import dataclass
 from typing import Any, Coroutine, Optional, Set
 
-import regex as re
-
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
 from keymaker.types import TokenConstraint
