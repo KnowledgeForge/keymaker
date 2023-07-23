@@ -2,7 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass
-from typing import AsyncGenerator, FrozenSet, Optional, Tuple, List, Dict
+from typing import AsyncGenerator, FrozenSet, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -40,7 +40,7 @@ class Huggingface(Model):
         if (self.model is not None and self.tokenizer is None) or (self.model is None and self.tokenizer is not None):
             raise ValueError("must specify either `model_name` or both `model` and `tokenizer`")
         self.model = self.model or AutoModelForCausalLM.from_pretrained(self.model_name)
-        
+
         self.tokenizer = self.tokenizer or AutoTokenizer.from_pretrained(self.model_name)
         self.tokens = transformers_tokens(self.tokenizer)
 
@@ -108,9 +108,14 @@ class Huggingface(Model):
                 output_scores=True,
                 **gen_kwargs,
             )
-            new_token_ids = output.sequences[0, len(prompt_token_ids) :].detach().cpu().tolist() # noqa: E203
+            new_token_ids = output.sequences[0, len(prompt_token_ids) :].detach().cpu().tolist()  # noqa: E203
 
-            logprobs = np.log([logits.detach().cpu().squeeze().softmax(0)[tok_id].item() for tok_id, logits in zip(new_token_ids, output.scores)]).tolist()
+            logprobs = np.log(
+                [
+                    logits.detach().cpu().squeeze().softmax(0)[tok_id].item()
+                    for tok_id, logits in zip(new_token_ids, output.scores)
+                ],
+            ).tolist()
             prompt_token_ids += new_token_ids
             tok_str = self.tokenizer.decode(new_token_ids, skip_special_tokens=True)  # type: ignore
             text += tok_str

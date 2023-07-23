@@ -1,17 +1,17 @@
 """A parse constraint which gives correct JSON"""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any,  Optional, Set, Tuple, Coroutine
-
-from keymaker.models.base import Model
+from typing import TYPE_CHECKING, Any, Coroutine, Optional, Set
 
 from keymaker.constraints.base import Constraint
+from keymaker.models.base import Model
 from keymaker.types import TokenConstraint
 
 if TYPE_CHECKING:
     from keymaker.models.base import Model
-from parsy import forward_declaration, regex, seq, string, alt
-from keymaker.constraints import ParserConstraint
+
+from parsy import alt, forward_declaration, regex, seq, string
+
 
 # parser derived from parsy example
 # Utilities
@@ -45,6 +45,7 @@ string_esc = string("\\") >> (
 )
 quoted = optional_whitespace(string('"') >> (string_part | string_esc).many().concat() << string('"'))
 
+
 @dataclass
 class JsonConstraint(Constraint):
     keys: Optional[Set[str]] = None
@@ -53,7 +54,7 @@ class JsonConstraint(Constraint):
     allow_string: bool = True
     allow_number: bool = True
     allow_boolean: bool = True
-    
+
     def __post_init__(self):
 
         if self.keys:
@@ -76,17 +77,17 @@ class JsonConstraint(Constraint):
         if self.allow_array:
             opts.append(array)
         if self.allow_boolean:
-            opts.append(true)         
-            opts.append(false)            
+            opts.append(true)
+            opts.append(false)
         if self.allow_null:
             opts.append(null)
 
         # Everything
         json_value.become(alt(*opts))
         json_doc = json_value
-    
+
+        from keymaker.constraints import ParserConstraint
         self.constraint = ParserConstraint(parser=json_doc)
-        
+
     async def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> Coroutine[Any, Any, TokenConstraint]:
         return await self.constraint.constrain_tokens(base_text, completion_text, model)
-    

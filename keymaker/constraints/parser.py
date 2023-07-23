@@ -1,9 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Coroutine, Dict, List, Optional, Set, Tuple, FrozenSet, Union
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Coroutine, List, Optional, Union
 
 import regex as re
-from parsy import Parser, ParseError
+from parsy import ParseError, Parser
 
 from keymaker.constraints.base import Constraint
 from keymaker.types import TokenConstraint
@@ -15,7 +15,6 @@ except ImportError:
 
 if TYPE_CHECKING:
     from keymaker.models.base import Model
-
 
 
 @dataclass
@@ -38,7 +37,7 @@ class ParserConstraint(Constraint):
         self._terminal_regexes = None
         if Lark is not None and isinstance(self.parser, Lark):
             self._extract_terminal_regex()
-            
+
     def _extract_terminal_regex(self):
         regex_map = {}
         for term in parser.terminals:  # type: ignore
@@ -49,13 +48,13 @@ class ParserConstraint(Constraint):
     def _is_valid_token(self, patterns: List[re.Pattern[str]], token_id: int, partial_completion: str, model: "Model") -> bool:
         poss_completion = partial_completion + model.tokens[token_id]
         return any((pattern.fullmatch(poss_completion, partial=True) for pattern in patterns))
-    
-    def _compile_re(self, pattern: str)-> re.Pattern[str]:
+
+    def _compile_re(self, pattern: str) -> re.Pattern[str]:
         try:
-            return re.compile(self.ignore_pattern+pattern+self.ignore_pattern)
+            return re.compile(self.ignore_pattern + pattern + self.ignore_pattern)
         except Exception:
-            return re.compile(self.ignore_pattern+re.escape(pattern)+self.ignore_pattern)
-    
+            return re.compile(self.ignore_pattern + re.escape(pattern) + self.ignore_pattern)
+
     async def _constrain_tokens_parsy(
         self,
         base_text: str,
@@ -77,7 +76,6 @@ class ParserConstraint(Constraint):
                 except Exception:
                     pass
 
-
         regex_patterns = [self._compile_re(lex) for lex in valid_next_lex]
 
         with ThreadPoolExecutor():
@@ -89,14 +87,15 @@ class ParserConstraint(Constraint):
             )
         return valid_token_ids
 
-
     async def _constrain_tokens_lark(
         self,
         base_text: str,
         completion_text: str,
         model: "Model",
     ) -> Coroutine[Any, Any, TokenConstraint]:
-        import pdb; pdb.set_trace()
+        import pdb
+
+        pdb.set_trace()
         # find what rules from the parser are valid next
         try:
             parser.parse(input_str)  # type: ignore

@@ -2,17 +2,22 @@
 
 from dataclasses import dataclass
 from typing import Optional
-from parsy import regex, string, generate
+
+from parsy import generate, regex, string
+
 
 @dataclass
 class Format:
     name: Optional[str]
 
+
 lbrack = string("{")
 rbrack = string("}")
 
+
 def format_parser(s: str):
     chunks = []
+
     @generate
     def helper():
         text = yield regex(r'[^{}]*')
@@ -21,13 +26,14 @@ def format_parser(s: str):
         if bracket1 and bracket2:
             rest = yield (regex(r'[^{}]*}'))
             yield rbrack
-            return [text+"{"+rest]
+            return [text + "{" + rest]
         if bracket1:
             inner = yield regex(r'\s*[a-zA-Z_]*[a-zA-Z0-9_]*\s*') | regex(r'\s*[a-zA-Z_][a-zA-Z0-9_]*\s*')
             yield rbrack
             return [text, Format(inner or None)]
         return [text]
+
     while s:
         chunk, s = helper.parse_partial(s)
-        chunks+=chunk
+        chunks += chunk
     return chunks

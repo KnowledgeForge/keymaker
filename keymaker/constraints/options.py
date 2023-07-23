@@ -1,7 +1,7 @@
 """Constraints over sets of fixed options"""
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Set, Tuple, Coroutine, Any
+from typing import Any, Coroutine, Set
 
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model

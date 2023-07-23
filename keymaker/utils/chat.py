@@ -5,8 +5,7 @@ import regex as re
 if TYPE_CHECKING:
     from keymaker import Prompt
 
-from parsy import regex, string, seq, alt
-
+from parsy import alt, regex, seq, string
 
 
 def split_tags(
@@ -39,20 +38,22 @@ def split_tags(
     text = str(text)
     role = alt(*(string(s) for s in roles))
     tag_begin = seq(
-        string(tag_start), 
+        string(tag_start),
         role,
-        string(tag_end), 
+        string(tag_end),
     )
     tag_complete = seq(
-        string(tag_start), 
+        string(tag_start),
         string("/"),
         role,
-        string(tag_end), 
+        string(tag_end),
     )
 
     content = regex(r"([^%]+|\n(?!\s*%))+")
 
-    message = seq(tag_begin, content, tag_complete).map(lambda x: {'role': x[0][1], 'content': x[1]}) | content.map(lambda x: {'role': default_role, 'content': x})
+    message = seq(tag_begin, content, tag_complete).map(lambda x: {'role': x[0][1], 'content': x[1]}) | content.map(
+        lambda x: {'role': default_role, 'content': x},
+    )
 
     message_parser = message.at_least(1)
     return message_parser.parse(text)

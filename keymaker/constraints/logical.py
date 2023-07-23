@@ -1,7 +1,7 @@
 """Common logical constraints for combining other constraints"""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple, cast, Coroutine
+from typing import TYPE_CHECKING, Any, Coroutine, List, Sequence, cast
 
 from keymaker.constraints.base import Constraint
 from keymaker.types import TokenConstraint

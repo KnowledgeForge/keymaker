@@ -2,7 +2,10 @@
 import warnings
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Protocol, Set, Union
+
+if TYPE_CHECKING:
+    from keymaker.prompt import CompletionConfig, Prompt
 
 
 class DecodingStrategy(str, Enum):
@@ -28,3 +31,15 @@ Tokens = Dict[int, str]
 TokenDistribution = Dict[str, int]
 SelectedTokens = Set[int]
 TokenConstraint = Union[None, SelectedTokens, str]
+
+
+class Stringable(Protocol):
+    def __str__(self) -> str:
+        pass
+
+
+FormatArg = Union[
+    Stringable,
+    Callable[["Prompt"], Union[Stringable, "CompletionConfig"]],
+    Callable[["Prompt"], Iterable[Union[Stringable, "CompletionConfig"]]],
+]

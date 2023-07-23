@@ -1,9 +1,11 @@
 """Models to use with any openai compatible api endpoints"""
 import warnings
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, AsyncGenerator, Dict, FrozenSet, Optional
-import numpy as np
+
 import aiohttp
+import numpy as np
 import openai
 import tiktoken
 from tiktoken import Encoding
@@ -11,7 +13,7 @@ from tiktoken import Encoding
 from keymaker.models.base import ChatModel, Model
 from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
 from keymaker.utils.chat import split_tags
-from functools import lru_cache
+
 
 @lru_cache(10)
 def openai_tokens(tokenizer: Encoding) -> Tokens:
@@ -93,8 +95,12 @@ class OpenAIChat(ChatModel):
             # try to make the sampling as deterministic as possible
             # to select only the one top token
             gen_kwargs['temperature'] = 0
-            gen_kwargs['top_p'] = 1/self.vocab_size  # select only n tokens to get over 1/self.vocab_size, should always be a single token
-            if 'top_k' in gen_kwargs:# non-openai yet openai-compliant apis may also support topk while the official api does not
+            gen_kwargs['top_p'] = (
+                1 / self.vocab_size
+            )  # select only n tokens to get over 1/self.vocab_size, should always be a single token
+            if (
+                'top_k' in gen_kwargs
+            ):  # non-openai yet openai-compliant apis may also support topk while the official api does not
                 gen_kwargs['top_k'] = 1
 
         payload = {
@@ -132,11 +138,12 @@ class OpenAIChat(ChatModel):
                 f"of {self}. Consider stricter constraints. Will select"
                 "lowest token ids up to this limit.",
             )
-            selected_tokens = sorted(list(selected_tokens))[:self.max_token_selection]#type: ignore
+            selected_tokens = sorted(list(selected_tokens))[: self.max_token_selection]  # type: ignore
         logit_bias = {}
         if selected_tokens:
             for i, idx in enumerate(selected_tokens):
                 logit_bias[str(idx)] = bias
+
         def result_handler(response):
             delta = response["choices"][0]["delta"]
             return (
@@ -238,7 +245,9 @@ class OpenAICompletion(Model):
         if decoder.strategy == DecodingStrategy.GREEDY:
             # try to make the sampling as deterministic as possible
             # to select only the one top token
-            gen_kwargs['top_p'] = 1/self.vocab_size  # select only n tokens to get over 1/self.vocab_size, should always be a single token
+            gen_kwargs['top_p'] = (
+                1 / self.vocab_size
+            )  # select only n tokens to get over 1/self.vocab_size, should always be a single token
             if 'top_k' in gen_kwargs:
                 gen_kwargs['top_k'] = 1
         payload = {"prompt": text, "logit_bias": logit_bias, "model": self.model_name, "max_tokens": max_tokens, "logprobs": 5, **gen_kwargs}  # type: ignore
@@ -270,7 +279,7 @@ class OpenAICompletion(Model):
                 f"of {self}. Consider stricter constraints. Will select"
                 "lowest token ids up to this limit.",
             )
-            selected_tokens = sorted(list(selected_tokens))[:self.max_token_selection]#type: ignore
+            selected_tokens = sorted(list(selected_tokens))[: self.max_token_selection]  # type: ignore
         logit_bias = {}
         if selected_tokens:
             for i, idx in enumerate(selected_tokens):

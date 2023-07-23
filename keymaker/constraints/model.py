@@ -1,8 +1,10 @@
 """A constraint based on some model's output"""
 
 from dataclasses import dataclass
-from typing import Any, Coroutine, Tuple, Optional, Set
+from typing import Any, Coroutine, Optional, Set
+
 import regex as re
+
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
 from keymaker.types import TokenConstraint
@@ -58,7 +60,8 @@ class ModelConstraint(Constraint):
                 break
             try:
                 model_tok_id = model.encode(tok)[0]
-            except Exception: continue
+            except Exception:
+                continue
             if preselected and model_tok_id not in preselected:
                 continue
             if model_tok_id not in selected_tokens:

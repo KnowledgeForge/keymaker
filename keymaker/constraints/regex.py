@@ -1,7 +1,7 @@
 """Constraints for regex patterns"""
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any, Coroutine, Tuple, Union
+from typing import Any, Coroutine, Union
 
 import regex as re
 
@@ -40,7 +40,7 @@ class RegexConstraint(Constraint):
         if self.terminate_on_match:
             m = self._pattern.match(completion_text)
             if m and m.start() == 0:
-                return completion_text[:m.end()]
+                return completion_text[: m.end()]
 
         with ThreadPoolExecutor():
             valid_token_ids = set(

@@ -1,6 +1,6 @@
 """Base Constraint interface"""
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Coroutine
+from typing import TYPE_CHECKING, Any, Coroutine
 
 if TYPE_CHECKING:
     from keymaker.models.base import Model
@@ -41,7 +41,7 @@ class Constraint(ABC):
         from keymaker.constraints.logical import AndConstraint
 
         return AndConstraint([self, other])
-    
+
     def __invert__(self):
         from keymaker.constraints.logical import NotConstraint
 

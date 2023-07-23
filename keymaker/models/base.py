@@ -64,7 +64,7 @@ class Model(ABC):
         ret, probs = [], []
         async for tok, prob in gen:  # type: ignore
             ret.append(tok)
-            probs+=prob
+            probs += prob
         return ret, probs
 
     @abstractmethod
@@ -103,6 +103,7 @@ class Model(ABC):
     @abstractmethod
     def bos_token_id(self) -> int:
         """Get the token id of the beginning of sequence (bos) token."""
+
 
 class ChatModel(Model):
     """Base model for chat based models"""

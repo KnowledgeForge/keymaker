@@ -1,7 +1,7 @@
 """A model for use with an in-memory Llama Cpp"""
 
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Dict, FrozenSet, Optional, List, Tuple
+from typing import Any, AsyncGenerator, Dict, FrozenSet, List, Optional, Tuple
 
 import numpy as np
 
@@ -17,8 +17,10 @@ except ImportError:
 
 
 import math
+
 _log = math.log
-math.log = lambda x: _log(x+1e-10)
+math.log = lambda x: _log(x + 1e-10)
+
 
 def try_decode(tok_bytes: bytes) -> str:
     try:
@@ -33,7 +35,7 @@ def llama_tokens(llm: "Llama") -> Tokens:  # type: ignore
     tokens = {}
     for i in range(vocab_len - 1):
         decoded = try_decode(llm.detokenize([i]))  # type: ignore
-        if decoded:# and (decoded not in decoded_already):
+        if decoded:  # and (decoded not in decoded_already):
             tokens[i] = decoded
             # decoded_already.add(decoded)
     return tokens
@@ -62,7 +64,7 @@ class LlamaCpp(Model):
             raise ValueError("must specify either `model_name` or `model`")
         if self.model_path is not None and self.model is not None:
             raise ValueError("must specify either `model_name` or `model` not both")
-        self.model = self.model or Llama(model_path=self.model_path, logits_all= True, **(self.llama_kwargs or {}))  # type: ignore
+        self.model = self.model or Llama(model_path=self.model_path, logits_all=True, **(self.llama_kwargs or {}))  # type: ignore
         self.tokens = llama_tokens(self.model)
         if self.cache_type is not None:
             if self.cache_type == "disk":
@@ -87,7 +89,7 @@ class LlamaCpp(Model):
 
     def _logit_processor(self, selected_tokens: Optional[SelectedTokens] = None):
         logits_processor = None
-        if selected_tokens is not None: 
+        if selected_tokens is not None:
 
             def _logits_processor(input_ids, scores):
                 mask = np.zeros_like(scores) + -100
@@ -118,11 +120,13 @@ class LlamaCpp(Model):
             gen_kwargs['top_p'] = top_p
         if top_k := decoder.top_k:
             gen_kwargs['top_k'] = top_k
-            
+
         if decoder.strategy == DecodingStrategy.GREEDY:
             # try to make the sampling as deterministic as possible
             # to select only the one top token
-            gen_kwargs['top_p'] = 1/self.vocab_size  # select only n tokens to get over .01, should virually always be a single token
+            gen_kwargs['top_p'] = (
+                1 / self.vocab_size
+            )  # select only n tokens to get over .01, should virually always be a single token
             if 'top_k' in gen_kwargs:
                 gen_kwargs['top_k'] = 1
 
@@ -132,7 +136,7 @@ class LlamaCpp(Model):
         token_generator = await run_in_threadpool(self.model, **gen_kwargs)  # type: ignore
         async for chunk in iterate_in_threadpool(token_generator):
             delta = chunk['choices'][0]
-            if delta['text']=="":
+            if delta['text'] == "":
                 break
             token = delta['text']
             logprob = delta['logprobs']['top_logprobs'][0][token] if delta['logprobs'] else [0]
