@@ -25,7 +25,8 @@
 - [Why KeyMaker](#why-keymaker)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Basic Example](#basic-example)
+- [Example](#jumping-in-with-both-feet-completing-formatted-prompts)
+- [Basic Completion Example](#basic-example-with-complete)
 - [Accessing Completions](#accessing-completions)
 - [Prompt Mutation On Demand](#omitting-completions-or-prompt-portions)
 - [Model Options](#model-options)
@@ -96,9 +97,350 @@ You can further optionally install KeyMaker to leverage HuggingFace or LlamaCpp 
 
 ## Usage
 
-### Basic Example
+### Jumping in with both feet, completing formatted prompts
 
-First, note that `Prompt`s and `Completion`s are two of the fundamental types in Keymaker.
+#### First, some imports
+
+
+```python
+from datetime import datetime
+from typing import Optional
+import openai
+
+# There are a variety of models available in Keymaker.
+# Some are aliased such as gpt4 and chatgpt
+from keymaker.models import chatgpt, LlamaCpp  # , gpt4, OpenAICompletion, OpenAIChat
+
+# There are a variety of constraints as well.
+# These are just a few of the most common.
+from keymaker.constraints import RegexConstraint, OptionsConstraint, StopsConstraint
+
+# Finally, the core components of Keymaker
+from keymaker import Prompt, Completion, CompletionConfig
+```
+
+# Part of this demo showcases Keymaker's ability to leverage OpenAI models.
+You can modify this as needed including swapping the model, but if you follow this example directly, load an api key however you see fit.
+
+
+```python
+import json
+
+with open("./config.json") as f:
+    openai.api_key = json.loads(f.read())["OPENAI_API_KEY"]
+```
+
+# For example's sake, we can just create two streams that do some sort of printing
+In reality, this could feed SSE or a websocket. Of course, streaming is optional as most everything in Keymaker is.
+
+
+```python
+async def print_stream(completion: Optional[Completion]):
+    if completion:
+        print(repr(completion))
+
+
+async def yo_stream(completion: Optional[Completion]):
+    if completion:
+        print("YO " + completion)
+```
+
+# Let's establish the models upfront for the example
+We will use the alias for ChatGPT. There are parameters we can set for Models, but we will just use the defaults here.
+
+
+```python
+chat_model = chatgpt()
+
+llama_model = LlamaCpp(
+    model_path="/Users/nick/Downloads/llama-2-7b-chat.ggmlv3.q3_K_S.bin",
+    llama_kwargs={
+        "verbose": False
+    },  # we don't care about all the timing infor llamacpp will dump
+)
+```
+
+#### These are some fun things we can just plug into our prompt at any time
+
+
+```python
+# A friendly use message stored in a variable
+user_message = "Hi, my name is Nick."
+
+# This shows how you can do anything you ever would with a `map_fn` function you intend to use with Keymaker
+my_math_answer = None
+
+
+# if the model does not give the answer as 15, we will just override it!
+def store_my_math(answer):
+    global my_math_answer
+    my_math_answer = int(answer)
+    if my_math_answer != 15:
+        return "I'm sorry, but I am very poor at math."
+    return 15
+
+
+# Again, we can do anything with a `map_fn`
+def my_log_function(some_completion):
+    import logging
+
+    # Set up logging configuration
+    logging.basicConfig(filename="my_log_file.log", level=logging.INFO)
+
+    # Log the completion info
+    logging.info(f"Some completion: {some_completion}")
+
+    return some_completion
+```
+
+
+    <IPython.core.display.Javascript object>
+
+
+
+```python
+# These are the values you can specify for things related to generating completions
+# e.g. Prompt defaults and CompletionConfig parameters:
+#
+# The model to use for completion
+#     model: Optional[Model] = None
+#
+# An optional constraint to restrict model output
+#     constraint: Optional[Constraint] = None
+#
+# An optional name to label the completion in the prompt
+#     name: Optional[str] = None
+#
+# The maximum number of tokens that can be generated in the completion
+#     max_tokens: Optional[int] = None
+#
+# Any decoding parameters e.g. temperature, top_p, strategy (Greedy, Sample). Defaults to a greedy decoder with the OpenAI default temp and top_p
+#     decoder: Optional[Decoder] = None
+#
+# An async function that completion chunks (tokens) will be passed to as generated. Once done, a None will be sent
+#     stream: Optional[Callable[[Optional['Completion']], Awaitable[Any]]] = None
+#
+# A function to run on a completion once it is completed. The output must be castable to a string and will be added to the prompt in place of the completion given.
+#     map_fn: Callable[[Completion], Stringable] = noop
+#
+# How long to wait for model response before giving up
+#     timeout: float = 10.0
+#
+# Whether or not to truncate the length of the prompt prior to generation to avoid overflow and potential error of the model
+#     truncate: bool = False
+#
+# Whether to eagerly generate tokens and then test whether they abide by the constrain.
+# This depends on parameters set at the model level such as `sample_chunk_size` on OpenAIChat models.
+# None is 'auto' and will allow Keymaker to decide if this is necessary on its own
+#     try_first: Optional[bool] = None
+```
+
+
+    <IPython.core.display.Javascript object>
+
+
+# Here, we create a prompt with format parameters as you would expect in regular python strings.
+`{}` is, as you would expect, simply in order of the args passed to `.format`
+similarly, `{name}` would be a kwarg  to `.format(name=...)`
+
+
+```python
+prompt = Prompt(
+    """Time: {time}
+User: {user_msg}
+Assistant: Hello, {}{punctuation}
+User: Can you write me a poem about a superhero named pandaman being a friend to {}?
+Assistant:{poem}
+User: What is 10+5?
+Assistant: The answer is 10+5={math}
+
+The final answer is {fin}!
+
+User: Countdown from 5 to 0.
+Assistant: 5, 4, {countdown}
+
+""",
+    # Now the default completion parameters. See above for all the options
+    # These are all optional, but at least a model would need to be specified to any given request for a completion by an LLM
+    chat_model,  # default model when not otherwise specified
+    stream=print_stream,  # default stream when not otherwise specified
+    max_tokens=25,  # the default number of max tokens
+    map_fn=my_log_function,  # default map_fn. if a map_fn is not specified for specific completions, this will run on the completion
+)
+```
+
+
+    <IPython.core.display.Javascript object>
+
+
+# Now, we generate some completions.
+Here are the different types of arguments that can be passed to the .format() method on a prompt object:
+
+- Stringable: Any string or object that can be converted to a string, like str, int, etc. This just formats the prompt with that static string.
+
+- Callable[[Prompt], Union[Stringable, CompletionConfig]]: A callable that takes the Prompt as an argument and returns either a Stringable or CompletionConfig. This allows dynamically formatting the prompt based on the state of the Prompt.
+
+- Callable[[Prompt], Iterable[Union[Stringable, CompletionConfig]]]: A callable that takes the Prompt and returns an iterable of Stringable or CompletionConfig objects. This allows dynamically formatting the prompt with multiple components based on the state of the Prompt.
+
+TLDR:
+
+- Stringable: Static prompt string
+- Callable returning Stringable or CompletionConfig: Dynamic single component prompt
+- Callable returning iterable of Stringable or CompletionConfig: Dynamic multi-component prompt
+
+The Callable options allow the prompt to be customized dynamically based on the context. The CompletionConfig return allows configuring the completions directly in the prompt formatter.
+
+
+```python
+# First, we make a function that we will use to generate multiple completions in part of our prompt
+def countdown(prompt):
+    while True:
+        count = prompt.completions["countdown"]
+        count = count[-1] if isinstance(count, list) else count
+        if count is None or int(count.strip(", ")) > 0:
+            yield CompletionConfig(
+                llama_model,
+                constraint=RegexConstraint("[0-9]"),
+                map_fn=lambda s: f"{s}, ",
+            )
+        else:
+            break
+```
+
+
+    <IPython.core.display.Javascript object>
+
+
+
+```python
+filled_in = await prompt.format(
+    # request a model completion
+    # note the lack of a specific model so it will use our default `chat_model` i.e. chatgpt
+    # we also specify a custom constraint of options for the first unnamed completion {}
+    CompletionConfig(constraint=OptionsConstraint({"Sam", "Nick"}), stream=yo_stream),
+    # for the second unnamed completion, we want the value from the first, a plain callable allows that like so
+    lambda p: p.completions[0],
+    # Maybe the user calling the prompt wants to dynamically swap punctuation, you could make this a variable
+    # we'll just call it a ! for now
+    punctuation="!",
+    # we'll point to the user message however
+    user_msg=user_message,
+    # and make sure the llm knows the current time
+    time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    # now, have llama write us a poem. it might be long so override our default `max_tokens`
+    # and make sure the model stops if it tries to make a new User or Assistant marker to hallucinate the converstaion
+    # don't include the start of the hallucination either
+    poem=CompletionConfig(
+        llama_model,
+        max_tokens=250,
+        constraint=StopsConstraint("User|Assistant", include=False),
+    ),
+    # for some reason, let's see if it can answer a math problem and we will use our function that manipulates it and potentially injects the prompt with something else ridiculing the model
+    math=CompletionConfig(
+        llama_model,
+        constraint=RegexConstraint("[0-9]+", terminate_on_match=False),
+        map_fn=store_my_math,
+    ),
+    #
+    fin=lambda p: CompletionConfig(
+        llama_model,
+        constraint=RegexConstraint(rf"{p.completions.math}|16"),
+    ),
+    countdown=countdown,
+)
+```
+#### Now we will get a lot of streaming output. 
+##### Of note, we are streamed static parts of our prompt to the default stream. Else, we are streamed to the stream we specify.
+
+    Completion(text='Time: ', value=`Time: `, start=0, stop=6, name=None, chunk=False, score=None)
+    Completion(text='2023-07-23 19:33:01', value=`2023-07-23 19:33:01`, start=6, stop=25, name=None, chunk=False, score=None)
+    Completion(text='
+    User: ', value=`
+    User: `, start=25, stop=32, name=None, chunk=False, score=None)
+    Completion(text='Hi, my name is Nick.', value=`Hi, my name is Nick.`, start=32, stop=52, name=None, chunk=False, score=None)
+    Completion(text='
+    Assistant: Hello, ', value=`
+    Assistant: Hello, `, start=52, stop=71, name=None, chunk=False, score=None)
+    YO Nick
+    Completion(text='!', value=`!`, start=75, stop=76, name=None, chunk=False, score=None)
+    Completion(text='
+    User: Can you write me a poem about a superhero named pandaman being a friend to ', value=`
+    User: Can you write me a poem about a superhero named pandaman being a friend to `, start=76, stop=158, name=None, chunk=False, score=None)
+    Completion(text='Nick', value=`Nick`, start=158, stop=162, name=None, chunk=False, score=None)
+    Completion(text='?
+    Assistant:', value=`?
+    Assistant:`, start=162, stop=174, name=None, chunk=False, score=None)
+    Completion(text=' Of', value=` Of`, start=177, stop=180, name=poem, chunk=True, score=0.9951801089838245)
+    Completion(text=' course', value=` course`, start=184, stop=191, name=poem, chunk=True, score=0.9998210072143591)
+    ...
+	LOTS OF STREAMING OUTPUT
+    ...
+    Completion(text='1', value=`1`, start=1008, stop=1009, name=countdown, chunk=True, score=0.9999861345081884)
+    Completion(text='0', value=`0`, start=1011, stop=1012, name=countdown, chunk=True, score=0.9999975762234011)
+    Completion(text='
+    
+    ', value=`
+    
+    `, start=1013, stop=1015, name=None, chunk=False, score=None)
+
+#### Let's see our final prompt completed
+
+```python
+filled_in
+```
+
+
+
+
+    Prompt('Time: 2023-07-23 19:33:01
+    User: Hi, my name is Nick.
+    Assistant: Hello, Nick!
+    User: Can you write me a poem about a superhero named pandaman being a friend to Nick?
+    Assistant: Of course, I'd be happy to help! Here's a poem for you:
+    Pandaman and Nick were the best of friends,
+    Their bond was strong, their hearts did blend.
+    Together they fought against evil's might,
+    With Pandaman's powers, Nick's courage took flight.
+    
+    Nick was just an ordinary guy,
+    But with Pandaman by his side, he felt like a hero in the sky.
+    Pandaman had the power to fly,
+    And with Nick's bravery, they made a perfect pair in the sky.
+    They soared through the clouds, their laughter echoing loud,
+    Their friendship was pure, their hearts unbound.
+    
+    So here's to Pandaman and Nick,
+    A friendship that will forever stick.
+    Together they saved the day,
+    With Pandaman's powers and Nick's courage, they found a way.
+    User: What is 10+5?
+    Assistant: The answer is 10+5=15
+    
+    The final answer is 15!
+    
+    User: Countdown from 5 to 0.
+    Assistant: 5, 4, 3, 2, 1, 0, 
+    
+    ')
+
+#### Let's access a completion. Note, it is a list because we generated multiple times under the same name `countdown`.
+
+
+```python
+filled_in.completions.countdown
+```
+
+
+
+
+    [Completion(text='3, ', value=`3, `, start=1001, stop=1004, name=countdown, chunk=False, score=0.999998160641246),
+     Completion(text='2, ', value=`2, `, start=1004, stop=1007, name=countdown, chunk=False, score=0.9999988864704665),
+     Completion(text='1, ', value=`1, `, start=1007, stop=1010, name=countdown, chunk=False, score=0.9999861345081884),
+     Completion(text='0, ', value=`0, `, start=1010, stop=1013, name=countdown, chunk=False, score=0.9999975762234011)]
+
+### Basic Example with `.complete`
+
+First, note that `Prompt`s and `Completion`s are a few of the fundamental types in Keymaker.
 
 To use KeyMaker with a language model, you need to first create a `Model` object. For example, to use KeyMaker with Hugging Face's GPT-2 model:
 
