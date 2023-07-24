@@ -1,6 +1,6 @@
 """Base Constraint interface"""
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Coroutine
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from keymaker.models.base import Model
@@ -15,7 +15,7 @@ class Constraint(ABC):
         base_text: str,
         completion_text: str,
         model: "Model",
-    ) -> Coroutine[Any, Any, TokenConstraint]:
+    ) -> TokenConstraint:
         """Constrain the token ids that can be sampled from the model's vocabulary.
 
             Args:

@@ -1,6 +1,5 @@
 """Constraints for stop patterns"""
 from dataclasses import dataclass
-from typing import Any, Coroutine
 
 import regex as re
 
@@ -29,7 +28,7 @@ class StopsConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: Model,
-    ) -> Coroutine[Any, Any, TokenConstraint]:
+    ) -> TokenConstraint:
         match = self._pattern.search(completion_text)
         if match:
             if not self.include:

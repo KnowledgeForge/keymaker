@@ -1,7 +1,7 @@
 """A constraint based on some model's output"""
 
 from dataclasses import dataclass
-from typing import Any, Coroutine, Optional, Set
+from typing import Optional, Set
 
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
@@ -35,19 +35,21 @@ class ModelConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: Model,
-    ) -> Coroutine[Any, Any, TokenConstraint]:
+    ) -> TokenConstraint:
 
         preselected: Optional[Set[int]] = None
 
         if self.constraint is not None:
-            preselected, _ = await self.constraint.constrain_tokens(base_text, completion_text, model)
+            preselected = await self.constraint.constrain_tokens(base_text, completion_text, model)  # type: ignore
             if not isinstance(preselected, set) or len(preselected) == 0:
                 return set()
 
         if self.top_k and preselected and len(preselected) <= self.top_k:
             return preselected
 
-        probs = sorted((await self.model.probs(base_text + completion_text)), key=lambda e: e[1], reverse=True)
+        if not hasattr(self.model, 'probs'):
+            raise TypeError(f"Model constraint requires the model to implement `probs`. Got {self.model}.")
+        probs = sorted((await self.model.probs(base_text + completion_text)), key=lambda e: e[1], reverse=True)  # type: ignore
         selected_tokens = set()
         tot_p = 0
         tot_k = 0

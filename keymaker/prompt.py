@@ -205,7 +205,7 @@ class Prompt(str):
     def token_length(self, model: Model) -> int:
         return len(model.encode(self.prompt))
 
-    async def format(self, *args: FormatArg, **kwargs: FormatArg) -> "Prompt":
+    async def format(self, *args: FormatArg, **kwargs: FormatArg) -> "Prompt":  # type: ignore
         formattings = format_parser(self)
         prompt = self[:0]
         unnamed_index = 0
@@ -227,7 +227,7 @@ class Prompt(str):
                 config.name = name if name is not None else config.name
                 prompt = await prompt.complete(completion_config=config)
             elif callable(config):
-                config = config(prompt)
+                config = config(prompt)  # type: ignore
                 if isinstance(config, Generator):
                     for config_chunk in config:
                         if isinstance(config_chunk, CompletionConfig):
@@ -244,7 +244,7 @@ class Prompt(str):
                     else:
                         addition = config
             else:
-                addition = config
+                addition = config  # type: ignore
             if addition is not None:
                 completion = Completion(addition, len(prompt), None, None, False, None)
                 await default_stream(completion)
@@ -298,7 +298,7 @@ class Prompt(str):
             generated = ""
 
             async for tok, logprob in model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):
-                logprobs_sum = add_logprob(logprobs_sum, *logprob)
+                logprobs_sum = add_logprob(logprobs_sum, *logprob)  # type: ignore
                 if stream:
                     await stream(
                         Completion(
@@ -316,7 +316,12 @@ class Prompt(str):
                 await stream(None)
 
             completion = Completion(
-                generated, len(self.prompt), len(self.prompt) + len(generated), name, False, exp(logprobs_sum),
+                generated,
+                len(self.prompt),
+                len(self.prompt) + len(generated),
+                name,
+                False,
+                exp(logprobs_sum),
             ).map(map_fn)
 
             ret.completions.add(completion, name)
@@ -377,7 +382,7 @@ class Prompt(str):
                 partial_completion += token
                 buffer_tokens = generated_tokens[1:]
                 buffer_logprobs = logprobs[1:]
-                logprobs_sum = add_logprob(logprobs_sum, logprobs[0])
+                logprobs_sum = add_logprob(logprobs_sum, logprobs[0])  # type: ignore
                 await send_stream(token, True, add_logprob(0, logprobs[0]))
                 token_count += 1
             else:  # tried but need to validate token
@@ -386,7 +391,7 @@ class Prompt(str):
                     partial_completion += token
                     buffer_tokens = generated_tokens[1:]
                     buffer_logprobs = logprobs[1:]
-                    logprobs_sum = add_logprob(logprobs_sum, logprobs[0])
+                    logprobs_sum = add_logprob(logprobs_sum, logprobs[0])  # type:ignore
                     free_attempt = True  # will be allowed to try again next round
                     await send_stream(token, True, add_logprob(0, logprobs[0]))
                     token_count += 1

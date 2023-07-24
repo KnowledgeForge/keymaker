@@ -1,7 +1,7 @@
 """A parse constraint which gives correct JSON"""
 
 from dataclasses import dataclass
-from typing import Any, Coroutine, Optional, Set
+from typing import Optional, Set
 
 from parsy import alt, forward_declaration, regex, seq, string
 
@@ -86,5 +86,5 @@ class JsonConstraint(Constraint):
 
         self.constraint = ParserConstraint(parser=json_doc)
 
-    async def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> Coroutine[Any, Any, TokenConstraint]:
+    async def constrain_tokens(self, base_text: str, completion_text: str, model: Model) -> TokenConstraint:
         return await self.constraint.constrain_tokens(base_text, completion_text, model)

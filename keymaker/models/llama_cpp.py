@@ -19,7 +19,7 @@ except ImportError:
 import math
 
 _log = math.log
-math.log = lambda x: _log(x + 1e-10)
+math.log = lambda x: _log(x + 1e-10)  # type: ignore
 
 
 def try_decode(tok_bytes: bytes) -> str:

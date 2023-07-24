@@ -2,7 +2,7 @@
 import warnings
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, AsyncGenerator, Dict, FrozenSet, Optional
+from typing import Any, AsyncGenerator, Dict, FrozenSet, List, Optional, Tuple
 
 import aiohttp
 import openai
@@ -123,7 +123,7 @@ class OpenAIChat(ChatModel):
         selected_tokens: Optional[SelectedTokens] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[Tuple[str, List[None]], None]:
         bias = 100
         # if there are more tokens to keep than ignore, invert the bias
         if selected_tokens and len(selected_tokens) > (self.vocab_size / 2):

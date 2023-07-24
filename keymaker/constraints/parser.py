@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, Coroutine, List, Optional, Union
+from typing import List, Optional, Union
 
 import regex as re
 from parsy import ParseError, Parser
@@ -60,7 +60,7 @@ class ParserConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: "Model",
-    ) -> Coroutine[Any, Any, TokenConstraint]:
+    ) -> TokenConstraint:
         # find what rules from the parser are valid next
         add_eos = False
         try:
@@ -74,7 +74,7 @@ class ParserConstraint(Constraint):
             if self.terminate_on_parse:
                 try:
                     test = completion_text[:index]
-                    self.parser.parse(test)
+                    self.parser.parse(test)  # type: ignore
                     return test
                 except Exception:
                     pass
@@ -97,7 +97,7 @@ class ParserConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: "Model",
-    ) -> Coroutine[Any, Any, TokenConstraint]:
+    ) -> TokenConstraint:
         index = None
         add_eos = False
         try:
@@ -117,7 +117,7 @@ class ParserConstraint(Constraint):
         if index and self.terminate_on_parse:
             try:
                 test = completion_text[:index]
-                self.parser.parse(test)
+                self.parser.parse(test)  # type: ignore
                 return test
             except Exception:
                 pass
@@ -140,7 +140,7 @@ class ParserConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: Model,
-    ) -> Coroutine[Any, Any, Coroutine[Any, Any, TokenConstraint]]:
+    ) -> TokenConstraint:
         if isinstance(self.parser, Parser):
             return await self._constrain_tokens_parsy(base_text, completion_text, model)
         return await self._constrain_tokens_lark(base_text, completion_text, model)

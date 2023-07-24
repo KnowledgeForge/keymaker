@@ -327,7 +327,7 @@ filled_in = await prompt.format(
     countdown=countdown,
 )
 ```
-#### Now we will get a lot of streaming output. 
+#### Now we will get a lot of streaming output.
 ##### Of note, we are streamed static parts of our prompt to the default stream. Else, we are streamed to the stream we specify.
 
     Completion(text='Time: ', value=`Time: `, start=0, stop=6, name=None, chunk=False, score=None)
@@ -356,9 +356,9 @@ filled_in = await prompt.format(
     Completion(text='1', value=`1`, start=1008, stop=1009, name=countdown, chunk=True, score=0.9999861345081884)
     Completion(text='0', value=`0`, start=1011, stop=1012, name=countdown, chunk=True, score=0.9999975762234011)
     Completion(text='
-    
+
     ', value=`
-    
+
     `, start=1013, stop=1015, name=None, chunk=False, score=None)
 
 #### Let's see our final prompt completed
@@ -379,26 +379,26 @@ filled_in
     Their bond was strong, their hearts did blend.
     Together they fought against evil's might,
     With Pandaman's powers, Nick's courage took flight.
-    
+
     Nick was just an ordinary guy,
     But with Pandaman by his side, he felt like a hero in the sky.
     Pandaman had the power to fly,
     And with Nick's bravery, they made a perfect pair in the sky.
     They soared through the clouds, their laughter echoing loud,
     Their friendship was pure, their hearts unbound.
-    
+
     So here's to Pandaman and Nick,
     A friendship that will forever stick.
     Together they saved the day,
     With Pandaman's powers and Nick's courage, they found a way.
     User: What is 10+5?
     Assistant: The answer is 10+5=15
-    
+
     The final answer is 15!
-    
+
     User: Countdown from 5 to 0.
-    Assistant: 5, 4, 3, 2, 1, 0, 
-    
+    Assistant: 5, 4, 3, 2, 1, 0,
+
     ')
 
 #### Let's access a completion. Note, it is a list because we generated multiple times under the same name `countdown`.

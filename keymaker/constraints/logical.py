@@ -1,7 +1,7 @@
 """Common logical constraints for combining other constraints"""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Coroutine, List, Sequence, cast
+from typing import TYPE_CHECKING, List, Sequence, cast
 
 from keymaker.constraints.base import Constraint
 from keymaker.types import TokenConstraint
@@ -25,7 +25,7 @@ class NotConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: "Model",
-    ) -> Coroutine[Any, Any, TokenConstraint]:
+    ) -> TokenConstraint:
         selected_tokens = await self.constraint.constrain_tokens(base_text, completion_text, model)
         if selected_tokens is None or isinstance(selected_tokens, str):
             return selected_tokens
@@ -47,7 +47,7 @@ class AndConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: "Model",
-    ) -> Coroutine[Any, Any, TokenConstraint]:
+    ) -> TokenConstraint:
         ret = None
         completions: List[str] = []
         for constraint in self.constraints:
@@ -82,7 +82,7 @@ class OrConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: "Model",
-    ) -> Coroutine[Any, Any, TokenConstraint]:
+    ) -> TokenConstraint:
         ret = set()  # type: ignore
         for constraint in self.constraints:
             selected_tokens = await constraint.constrain_tokens(base_text, completion_text, model)

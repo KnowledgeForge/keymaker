@@ -1,7 +1,7 @@
 """Constraints over sets of fixed options"""
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any, Coroutine, Set
+from typing import Set
 
 from keymaker.constraints.base import Constraint
 from keymaker.models.base import Model
@@ -26,7 +26,7 @@ class OptionsConstraint(Constraint):
         base_text: str,
         completion_text: str,
         model: Model,
-    ) -> Coroutine[Any, Any, TokenConstraint]:
+    ) -> TokenConstraint:
         if completion_text in self.options:
             return completion_text
 
