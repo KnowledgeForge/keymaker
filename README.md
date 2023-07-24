@@ -27,8 +27,9 @@
 - [Usage](#usage)
 - [Example](#jumping-in-with-both-feet-completing-formatted-prompts)
 - [Basic Completion Example](#basic-example-with-complete)
+- [Format vs Complete](#format-vs-complete)
 - [Accessing Completions](#accessing-completions)
-- [Prompt Mutation On Demand](#omitting-completions-or-prompt-portions)
+- [Prompt Mutation On Demand With Single Completions](#omitting-completions-or-prompt-portions-with-complete)
 - [Model Options](#model-options)
   - [Huggingface (Direct)](#huggingface-direct)
   - [OpenAI](#openai)
@@ -39,9 +40,11 @@
 - [Using Constraints](#using-constraints)
   - [RegexConstraint](#regexconstraint)
   - [ParserConstraint](#parserconstraint)
+  - [JsonConstraint](#jsonconstraint)
   - [OptionsConstraint](#optionsconstraint)
   - [StopsConstraint](#stopsconstraint)
   - [Combining Constraints](#combining-constraints)
+- [Transforming Completions](#transforming-completions)
 - [Streaming Completions](#streaming-completions)
 - [Decoding Parameters](#decoding-parameters)
 - [Creating Custom Models](#creating-custom-models)
@@ -64,8 +67,8 @@ the output of the model meets specific requirements or follows a desired format.
   - If you want to write control-flow around model decisions, you make the model select from a fixed set of decisions.
   - Need to use a tool? Guarantee the model outputs values your tool can use. No reprompting based on errors like Langchain.
 - KeyMaker is pure python
-  - alternatives like LMQL and Guidance require the use of Domain-specific languages
-  - These DSLs, while offering control flow, do not have the same level of control that plain python affords you - [prompts are just strings](#omitting-completions-or-prompt-portions)
+  - Alternatives like LMQL and Guidance require the use of Domain-specific languages
+  - These DSLs, while offering control flow, may not have the same level of control that plain python affords you
 - Keymaker provides generation regardless of the underlying model
   - From LlamaCPP and OpenAI, OpenAI compatible APIs, to HuggingFace - use models from your desired source
 - KeyMaker is powerful *and* extensible
@@ -496,6 +499,15 @@ print out the Completions object for the completed prompt
 Completions([], {'dog_ability': Completion(text = ' ability', start = 24, stop = 32)})
 ```
 
+### Format vs Complete
+If you've read through the above examples, you'll have noted that there are multiple ways to generate completions with Keymaker - `format` and `complete`.
+
+#### `format`
+`format` is meant to behave as you would expect on a string in Python. Namely, that you can defined a formatted string and fill in the values with your variables. Here, we simply expand the functionality to allow a model to insert output and you get all the goodies on top of that such as Keymaker's ability to leverage your static input, functions for any kind of controlflow in the midst of the prompt, generators for any kind of looped generation...
+
+#### `complete`
+`complete` on the other hand gives you complete control of generation but only one step at a time. With `complete`, the control flow after a generation is handled completely in your own code.
+
 ### Accessing Completions
 
 When using KeyMaker to generate text with constraints, you can name the completions to easily access them later.
@@ -546,7 +558,7 @@ In the example, we create a `Prompt` object with the text "The weather is ". We 
 
 We access the unnamed completion by indexing the `completions` attribute of the `Prompt` object, and the named completion by using the `name` as an attribute of the `completions` attribute.
 
-### Omitting Completions or Prompt Portions
+### Omitting Completions or Prompt Portions with `.complete`
 Again, KeyMaker's goal is to afford you all the power of LLM completions, with controlled outputs from the comfort and power of plain Python.
 
 With that in mind, we can do something seemingly basic but that may not be possible or obvious in other frameworks - not use things we've made!
@@ -725,7 +737,10 @@ KeyMaker does its best to avoid unnecessary calls to the model if a token is cle
 
 #### ParserConstraint
 
-`ParserConstraint` allows you to constrain the generated text based on a context-free grammar or a pre-built parser. For example, to generate text that follows a simple grammar:
+**Note:** Keymaker ships with inbuilt support for parser constraints based on [parsy](https://github.com/python-parsy/parsy) parsers.
+If you have Lark installed, you may use a Lark parser as well
+
+`ParserConstraint` allows you to constrain the generated text based on a pre-built parser of a context-free grammar. For example, to generate text that follows a simple grammar:
 
 ```python
 from lark import Lark
@@ -763,6 +778,11 @@ prompt = await prompt.complete(model=model, constraint=constraint, name='query',
 # %system%You are a sql expert%/system%
 # %user%Write me a query that selects the column y from table b.%/user%
 # SELECT y FROM b')
+```
+
+#### JsonConstraint
+```python
+from keymaker.constraints import JsonConstraint
 ```
 
 #### OptionsConstraint
@@ -827,6 +847,24 @@ prompt = (await prompt.complete(model=chat_model, constraint=combined_constraint
 print(prompt)
 # Whenever I see a basketball, it reminds me of my favorite fruit the orange.
 ```
+
+### Transforming Completions
+
+Sometimes, the output of a completion is not desired to be text from the model.
+
+Simply pass a prompt `complete` an asynchronous function
+
+```python
+from keymaker import Completion, CompletionConfig
+from keymaker.constraints import RegexConstraint
+
+async def my_stream(completion: Optional[Completion]):
+    print(completion)
+
+prompt = await Prompt("10+5={}").format(CompletionConfig(model=..., constraint=RegexConstraint(r"[0-9]", terminate_on_match=False), map_fn=int))
+
+prompt.completions[0].value==15
+# True
 
 ### Streaming Completions
 
