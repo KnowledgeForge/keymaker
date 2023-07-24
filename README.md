@@ -102,6 +102,62 @@ You can further optionally install KeyMaker to leverage HuggingFace or LlamaCpp 
 
 ### Jumping in with both feet, completing formatted prompts
 
+Keymaker views the problem of prompt completion as very simple. Take a string, fill in some values. 
+
+How do we go from 
+```python
+Time: {time}
+User: {user_msg}
+Assistant: Hello, {}{punctuation}
+User: Can you write me a poem about a superhero named pandaman being a friend to {}?
+Assistant:{poem}
+User: What is 10+5?
+Assistant: The answer is 10+5={math}
+
+The final answer is {fin}!
+
+User: Countdown from 5 to 0.
+Assistant: 5, 4, {countdown}
+
+"""
+```
+
+To
+```python
+"""
+Time: 2023-07-23 19:33:01
+User: Hi, my name is Nick.
+Assistant: Hello, Nick!
+User: Can you write me a poem about a superhero named pandaman being a friend to Nick?
+Assistant: Of course, I'd be happy to help! Here's a poem for you:
+Pandaman and Nick were the best of friends,
+Their bond was strong, their hearts did blend.
+Together they fought against evil's might,
+With Pandaman's powers, Nick's courage took flight.
+
+Nick was just an ordinary guy,
+But with Pandaman by his side, he felt like a hero in the sky.
+Pandaman had the power to fly,
+And with Nick's bravery, they made a perfect pair in the sky.
+They soared through the clouds, their laughter echoing loud,
+Their friendship was pure, their hearts unbound.
+
+So here's to Pandaman and Nick,
+A friendship that will forever stick.
+Together they saved the day,
+With Pandaman's powers and Nick's courage, they found a way.
+User: What is 10+5?
+Assistant: The answer is 10+5=15
+
+The final answer is 15!
+
+User: Countdown from 5 to 0.
+Assistant: 5, 4, 3, 2, 1, 0
+"""
+```
+
+Let's see how simple it should be.
+
 #### First, some imports
 
 
