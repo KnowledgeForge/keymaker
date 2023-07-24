@@ -119,7 +119,7 @@ from keymaker.constraints import RegexConstraint, OptionsConstraint, StopsConstr
 from keymaker import Prompt, Completion, CompletionConfig
 ```
 
-# Part of this demo showcases Keymaker's ability to leverage OpenAI models.
+#### Part of this demo showcases Keymaker's ability to leverage OpenAI models.
 You can modify this as needed including swapping the model, but if you follow this example directly, load an api key however you see fit.
 
 
@@ -130,7 +130,7 @@ with open("./config.json") as f:
     openai.api_key = json.loads(f.read())["OPENAI_API_KEY"]
 ```
 
-# For example's sake, we can just create two streams that do some sort of printing
+##### For example's sake, we can just create two streams that do some sort of printing
 In reality, this could feed SSE or a websocket. Of course, streaming is optional as most everything in Keymaker is.
 
 
@@ -145,7 +145,7 @@ async def yo_stream(completion: Optional[Completion]):
         print("YO " + completion)
 ```
 
-# Let's establish the models upfront for the example
+#### Let's establish the models upfront for the example
 We will use the alias for ChatGPT. There are parameters we can set for Models, but we will just use the defaults here.
 
 
@@ -198,48 +198,23 @@ def my_log_function(some_completion):
 
 
 
-```python
-# These are the values you can specify for things related to generating completions
-# e.g. Prompt defaults and CompletionConfig parameters:
-#
-# The model to use for completion
-#     model: Optional[Model] = None
-#
-# An optional constraint to restrict model output
-#     constraint: Optional[Constraint] = None
-#
-# An optional name to label the completion in the prompt
-#     name: Optional[str] = None
-#
-# The maximum number of tokens that can be generated in the completion
-#     max_tokens: Optional[int] = None
-#
-# Any decoding parameters e.g. temperature, top_p, strategy (Greedy, Sample). Defaults to a greedy decoder with the OpenAI default temp and top_p
-#     decoder: Optional[Decoder] = None
-#
-# An async function that completion chunks (tokens) will be passed to as generated. Once done, a None will be sent
-#     stream: Optional[Callable[[Optional['Completion']], Awaitable[Any]]] = None
-#
-# A function to run on a completion once it is completed. The output must be castable to a string and will be added to the prompt in place of the completion given.
-#     map_fn: Callable[[Completion], Stringable] = noop
-#
-# How long to wait for model response before giving up
-#     timeout: float = 10.0
-#
-# Whether or not to truncate the length of the prompt prior to generation to avoid overflow and potential error of the model
-#     truncate: bool = False
-#
-# Whether to eagerly generate tokens and then test whether they abide by the constrain.
-# This depends on parameters set at the model level such as `sample_chunk_size` on OpenAIChat models.
-# None is 'auto' and will allow Keymaker to decide if this is necessary on its own
-#     try_first: Optional[bool] = None
-```
+#### Keymaker Completion Configuration
+
+The following are the values that can be specified for Keymaker completion configuration, including prompt defaults and CompletionConfig parameters:
+
+- `model`: Optional[Model] = None - The model to use for completion.
+- `constraint`: Optional[Constraint] = None - An optional constraint to restrict model output.
+- `name`: Optional[str] = None - An optional name to label the completion in the prompt.
+- `max_tokens`: Optional[int] = None - The maximum number of tokens that can be generated in the completion.
+- `decoder`: Optional[Decoder] = None - Any decoding parameters (e.g. temperature, top_p, strategy) that control the way completions are generated. Defaults to a greedy decoder with the OpenAI default temperature and top_p.
+- `stream`: Optional[Callable[[Optional['Completion']], Awaitable[Any]]] = None - An async function that completion chunks (tokens) will be passed to as they are generated. Once done, a None will be sent.
+- `map_fn`: Callable[[Completion], Stringable] = noop - A function to run on a completion once it is completed. The output must be castable to a string and will be added to the prompt in place of the completion given.
+- `timeout`: float = 10.0 - How long to wait for model response before giving up.
+- `truncate`: bool = False - Whether or not to truncate the length of the prompt prior to generation to avoid overflow and potential error of the model.
+- `try_first`: Optional[bool] = None - Whether to eagerly generate tokens and then test whether they abide by the constraint. This depends on parameters set at the model level such as `sample_chunk_size` on OpenAIChat models. None is 'auto' and will allow Keymaker to decide if this is necessary on its own.
 
 
-    <IPython.core.display.Javascript object>
-
-
-# Here, we create a prompt with format parameters as you would expect in regular python strings.
+#### Here, we create a prompt with format parameters as you would expect in regular python strings.
 `{}` is, as you would expect, simply in order of the args passed to `.format`
 similarly, `{name}` would be a kwarg  to `.format(name=...)`
 
@@ -273,7 +248,7 @@ Assistant: 5, 4, {countdown}
     <IPython.core.display.Javascript object>
 
 
-# Now, we generate some completions.
+#### Now, we generate some completions.
 Here are the different types of arguments that can be passed to the .format() method on a prompt object:
 
 - Stringable: Any string or object that can be converted to a string, like str, int, etc. This just formats the prompt with that static string.
@@ -429,9 +404,6 @@ filled_in
 ```python
 filled_in.completions.countdown
 ```
-
-
-
 
     [Completion(text='3, ', value=`3, `, start=1001, stop=1004, name=countdown, chunk=False, score=0.999998160641246),
      Completion(text='2, ', value=`2, `, start=1004, stop=1007, name=countdown, chunk=False, score=0.9999988864704665),
