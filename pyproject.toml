@@ -9,7 +9,7 @@ includes = ["keymaker"]
 [project]
 name = "headjack-keymaker"
 dynamic = ["version"]
-description = "The most powerful, flexible and extensible way to control the output of large language models."
+description = "The most powerful, flexible and extensible way to control the output of large language models. [Getting Started](https://keymaker.headjack.ai/getting-started/)"
 authors = [
     {name = "circargs", email = "nick@ouellet.dev"},
     {name = "Nick Ouellet", email = "nick@ouellet.dev"},
