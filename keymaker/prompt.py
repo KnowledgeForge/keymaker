@@ -234,7 +234,7 @@ class Prompt(str):
                             config_chunk.name = name if name is not None else config_chunk.name
                             prompt = await prompt.complete(completion_config=config_chunk)
                         else:
-                            completion = Completion(config, len(prompt), None, None, False, None)
+                            completion = Completion(config_chunk, len(prompt), None, None, False, None)
                             await default_stream(completion)
                             prompt += completion
                 else:
