@@ -44,7 +44,6 @@ dev = [
 
 [project.urls]
 repository = "https://github.com/KnowledgeForge/keymaker"
-getting_started = "https://keymaker.headjack.ai/getting-started/"
 
 [tool.hatch.version]
 path = "keymaker/__about__.py"
