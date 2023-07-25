@@ -118,7 +118,7 @@ openai.api_key = ""
 chat_model = chatgpt()
 ```
 
-Define a function to generate unique hobbies:
+Here, we define a function to generate unique hobbies:
 
 ```python
 def hobbies(prompt: Prompt):
@@ -140,6 +140,13 @@ def hobbies(prompt: Prompt):
             model=chat_model, constraint=OptionsConstraint(hobbies_left)
         )
 ```
+
+Keymaker supports the following as format parameters:
+- `Stringable`: Anything that can be cast to a `str`.
+- `CompletionConfig`: A single parameterized `Completion`.
+- `Callable[[Prompt], Stringable | CompletionConfig]`: **Dynamically change the prompt completion by returning a SINGLE static `Stringable` or request a paramterized `Completion`** with a function that takes the current prompt at that point of completion.
+- `Callable[[Prompt], Generator[Stringable | CompletionConfig]]`: **Dynamically change the prompt completion by returning as many static `Stringable` or paramterized `Completion`s** with a `Generator`
+
 
 Fill the prompt:
 
