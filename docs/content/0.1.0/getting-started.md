@@ -1,6 +1,9 @@
 # Getting Started with KeyMaker
 
-KeyMaker is a Python library that provides a powerful and flexible way to control the output of large language models. This guide will walk you through installing KeyMaker and using it to generate controlled text.
+KeyMaker is a Python library that provides a powerful and flexible way to control the output of large language models. This guide will walk you through installing KeyMaker and using it to generate some completions including:
+  - with constraints
+  - different models
+  - streaming
 
 ## Installation
 
