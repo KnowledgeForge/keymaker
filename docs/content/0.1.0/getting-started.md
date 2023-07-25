@@ -1,3 +1,12 @@
+---
+categories: ["docs"]
+weight: 50
+title: Getting Started with KeyMaker
+tags: ["how-to", "core"]
+series: ["Usage"]
+series_weight: 10
+lightgallery: true
+---
 # Getting Started with KeyMaker
 
 KeyMaker is a Python library that provides a powerful and flexible way to control the output of large language models. This guide will walk you through installing KeyMaker and using it to generate some completions including:

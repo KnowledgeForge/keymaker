@@ -1,4 +1,13 @@
-# KeyMaker: Advanced Usage and Customization
+---
+categories: ["docs"]
+weight: 50
+title: Advanced Usage and Customization
+tags: ["how-to", "core"]
+series: ["Usage"]
+series_weight: 10
+lightgallery: true
+---
+# Advanced Usage and Customization
 
 In this section, we will explore more advanced usage of KeyMaker, including working with multiple models, custom constraints, and custom models.
 

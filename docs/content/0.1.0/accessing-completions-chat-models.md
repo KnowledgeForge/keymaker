@@ -1,4 +1,13 @@
-# KeyMaker: Accessing Completions and Working with Chat Models
+---
+categories: ["docs"]
+weight: 50
+title: Accessing Completions and Working with Chat Models
+tags: ["how-to", "core"]
+series: ["Usage"]
+series_weight: 10
+lightgallery: true
+---
+# Accessing Completions and Working with Chat Models
 
 In this section, we will explore how to access completions and work with chat models in KeyMaker.
 
