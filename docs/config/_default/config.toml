@@ -1,7 +1,55 @@
-baseURL = ''
-languageCode = 'en-us'
-title = 'Keymaker'
-theme = 'DoIt'
+baseURL = "/"
+theme = "hugo-whisper-theme"
+languageCode = "en-us"
+title = "Keymaker"
 
-[markup.goldmark.renderer]
-  unsafe = true
+pygmentsCodeFences = true
+pygmentsCodefencesGuessSyntax = true
+pygmentsUseClasses = true
+
+[module]
+  [module.hugoVersion]
+    extended = true
+    min = "0.55.0"
+
+# Controls how many words are printed in the content summary on the docs homepage.
+# See https://gohugo.io/content-management/summaries/
+summaryLength = 30
+
+[[menu.main]]
+    name = "Home"
+    url = "/"
+    weight = 1
+
+[[menu.main]]
+    name = "Docs"
+    url = "/docs/"
+    weight = 2
+
+[params]
+  google_analytics_id=""
+  homepage_button_link = '/docs'
+  homepage_button_text = 'Read The Docs'
+  homepage_intro = 'The most powerful, flexible and extensible way to control the output of large language models.'
+  homepage_image = '/images/terminal.gif'
+
+  ## You can enable to add anchor links to header elements
+  # enable_anchor_link = true
+
+  [params.homepage_meta_tags]
+    meta_description = "KeyMaker is the most powerful, flexible and extensible way to control the output of large language models."
+    meta_og_title = "Hugo Whisper Theme"
+    meta_og_type = "website"
+    meta_og_url = "https://hugo-whisper.netlify.app"
+    meta_og_image = "https://raw.githubusercontent.com/JugglerX/hugo-whisper-theme/master/images/tn.png"
+    meta_og_description = "KeyMaker is the most powerful, flexible and extensible way to control the output of large language models."
+    meta_twitter_card = "summary"
+    meta_twitter_site = "@zerostaticio"
+    meta_twitter_creator = "@zerostaticio"
+
+  [params.logo]
+      mobile = "/images/keymaker-logo.webp"
+      standard  = "/images/keymaker-logo.webp"
+
+  [params.footer]
+    copyright_text = 'Free Hugo theme by <a class="zerostatic" href="https://www.zerostatic.io">Zerostatic Themes</a>'

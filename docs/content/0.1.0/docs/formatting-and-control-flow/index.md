@@ -1,14 +1,14 @@
 ---
 categories: ["docs"]
 weight: 50
-title: Using Constraints
+title: Formatting and Control FLow
 tags: ["how-to", "core"]
 series: ["Usage"]
 series_weight: 10
 lightgallery: true
 ---
 
-# KeyMaker: Advanced Prompt Formatting and Control Flow
+# Advanced Prompt Formatting and Control Flow
 
 In this section, we will explore advanced prompt formatting and plain control flow with KeyMaker.
 
