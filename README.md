@@ -69,6 +69,9 @@ the output of the model meets specific requirements or follows a desired format.
 - KeyMaker is pure python
   - Alternatives like LMQL and Guidance require the use of Domain-specific languages
   - These DSLs, while offering control flow, may not have the same level of control that plain python affords you
+- Code should be testable
+  - Working with LLMs is no excuse for it to be difficult to test code
+  - Control-flow is embedding in prompts, it is virutally impossible to write programmatic tests of its complete behavior
 - Keymaker provides generation regardless of the underlying model
   - From LlamaCPP and OpenAI, OpenAI compatible APIs, to HuggingFace - use models from your desired source
 - KeyMaker is powerful *and* extensible
