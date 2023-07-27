@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://keymaker.headjack.ai">
-    <img src="https://github.com/KnowledgeForge/keymaker/blob/main/docs/assets/images/keymaker%20logo.svg" alt="Logo" width="150">
+    <img src="https://raw.githubusercontent.com/KnowledgeForge/keymaker/ce8e1d701c47081568be5c21fb4eaa07ed561149/docs/static/images/keymaker-logo.svg" alt="Logo" width="150">
   </a>
   <h3 align="center">Keymaker</h3>
   <p align="center">
