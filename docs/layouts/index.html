@@ -42,20 +42,19 @@
     <div class="row justify-content-center">
         <div id="termynal" data-termynal>
             <span data-ty="input">pip install headjack-keymaker</span>
-            <span data-ty data-ty-delay="100">Installing keymaker...</span> 
-            <span data-ty="progress"></span>
+            <span data-ty data-ty-delay="25">Installing keymaker...</span> 
             <span data-ty>Successfully installed keymaker</span>
             <span data-ty="input">ipython</span>
-            <span data-ty="input" data-ty-prompt="In[1]:">from keymaker import Prompt, CompletionConfig</span>
-            <span data-ty="input" data-ty-prompt="In[2]:">from keymaker.models import chatgpt, Huggingface</span>
-            <span data-ty="input" data-ty-prompt="In[3]:">from keymaker.constraints import OptionsConstraint, RegexConstraint</span>
-            <span data-ty="input" data-ty-prompt="In[4]:">chat_model = chatgpt()</span>
-            <span data-ty="input" data-ty-prompt="In[5]:">prompt = Prompt("Always happy to see you, {pet} are known for being", chat_model)</span>
-            <span data-ty="input" data-ty-prompt="In[6]:">prompt = await prompt.format(pet=CompletionConfig(constraint=RegexConstraint(r"(dog|cat)s?")))</span>
-            <span data-ty="input" data-ty-prompt="In[7]:">print(await prompt.complete(Huggingface('gpt2'), constraint = OptionsConstraint({" awesome!", " evil..."}), name="trait"))</span>
-            <span data-ty data-ty-prompt="Out[7]:">'Always happy to see you, dog are known for being awesome!'</span>
-            <span data-ty="input" data-ty-prompt="In[8]:">prompt.completions.trait.score</span>
-            <span data-ty data-ty-prompt="Out[8]:">0.8205356001853943</span>
+            <span data-ty="input" data-ty-prompt="In[1]:" data-ty-typeDelay="25" data-ty-lineDelay="400">from keymaker import Prompt, CompletionConfig</span>
+            <span data-ty="input" data-ty-prompt="In[2]:" data-ty-typeDelay="25" data-ty-lineDelay="400">from keymaker.models import chatgpt, Huggingface</span>
+            <span data-ty="input" data-ty-prompt="In[3]:" data-ty-typeDelay="25" data-ty-lineDelay="400">from keymaker.constraints import OptionsConstraint, RegexConstraint</span>
+            <span data-ty="input" data-ty-prompt="In[4]:" data-ty-typeDelay="25" data-ty-lineDelay="400">chat_model = chatgpt()</span>
+            <span data-ty="input" data-ty-prompt="In[5]:" data-ty-typeDelay="25" data-ty-lineDelay="400">prompt = Prompt("Always happy to see you, {pet} are known for being", chat_model)</span>
+            <span data-ty="input" data-ty-prompt="In[6]:" data-ty-typeDelay="25" data-ty-lineDelay="400">prompt = await prompt.format(pet=CompletionConfig(constraint=RegexConstraint(r"(dog|cat)s?")))</span>
+            <span data-ty="input" data-ty-prompt="In[7]:" data-ty-typeDelay="25" data-ty-lineDelay="400">print(await prompt.complete(Huggingface('gpt2'), constraint = OptionsConstraint({" awesome!", " evil..."}), name="trait"))</span>
+            <span data-ty data-ty-prompt="Out[7]:" data-ty-typeDelay="25" data-ty-lineDelay="400">'Always happy to see you, dog are known for being awesome!'</span>
+            <span data-ty="input" data-ty-prompt="In[8]:" data-ty-typeDelay="25" data-ty-lineDelay="400">prompt.completions.trait.score</span>
+            <span data-ty data-ty-prompt="Out[8]:" data-ty-typeDelay="25" data-ty-lineDelay="400">0.8205356001853943</span>
         </div>
     </div>
   </div>
