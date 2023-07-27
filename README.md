@@ -2,7 +2,7 @@
   <a href="https://keymaker.headjack.ai">
     <img src="https://github.com/KnowledgeForge/keymaker/blob/main/docs/assets/images/keymaker%20logo.svg" alt="Logo" width="150">
   </a>
-  <h3 align="center">KeyMaker</h3>
+  <h3 align="center">Keymaker</h3>
   <p align="center">
     The most powerful, flexible and extensible way to control the output of large language models.
     <br>
@@ -21,8 +21,8 @@
 
 ## Table of Contents
 
-- [About KeyMaker](#about-keymaker)
-- [Why KeyMaker](#why-keymaker)
+- [About Keymaker](#about-keymaker)
+- [Why Keymaker](#why-keymaker)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Example](#jumping-in-with-both-feet-completing-formatted-prompts)
@@ -54,19 +54,19 @@
 - [Disclaimer](#disclaimer)
 - [Copyright](#copyright)
 
-## About KeyMaker
+## About Keymaker
 
-KeyMaker is a Python library that provides a powerful, flexible, and extensible way
+Keymaker is a Python library that provides a powerful, flexible, and extensible way
 to control the output of large language models like OpenAI API-based models, Hugging Face's Transformers, LlamaCpp and (**Coming Soon**) any OpenAI API compatible server.
 It allows you to create and apply constraints on the generated tokens, ensuring that
 the output of the model meets specific requirements or follows a desired format.
 
-## Why KeyMaker?
+## Why Keymaker?
 - Generation is expensive and error-prone
   - Regardless of the model, if you are building something around it, you know what you want. Make the model do what you want with constrained generation!
   - If you want to write control-flow around model decisions, you make the model select from a fixed set of decisions.
   - Need to use a tool? Guarantee the model outputs values your tool can use. No reprompting based on errors like Langchain.
-- KeyMaker is pure python
+- Keymaker is pure python
   - Alternatives like LMQL and Guidance require the use of Domain-specific languages
   - These DSLs, while offering control flow, may not have the same level of control that plain python affords you
 - Code should be testable
@@ -74,14 +74,14 @@ the output of the model meets specific requirements or follows a desired format.
   - Control-flow is embedding in prompts, it is virutally impossible to write programmatic tests of its complete behavior
 - Keymaker provides generation regardless of the underlying model
   - From LlamaCPP and OpenAI, OpenAI compatible APIs, to HuggingFace - use models from your desired source
-- KeyMaker is powerful *and* extensible
-  - While others provide a limited set of existing constraints, KeyMaker provides the most extensive list
+- Keymaker is powerful *and* extensible
+  - While others provide a limited set of existing constraints, Keymaker provides the most extensive list
   - And you can add whatever more you want or need simply making a class
 
 
 ## Installation
 
-To install base KeyMaker, simply run one of the following commands:
+To install base Keymaker, simply run one of the following commands:
 
 ### From source:
 
@@ -96,7 +96,7 @@ pip install "headjack-keymaker"
 ```
 
 #### Options
-You can further optionally install KeyMaker to leverage HuggingFace or LlamaCpp directly with `[huggingface]` and/or `[llamacpp]` pip options.
+You can further optionally install Keymaker to leverage HuggingFace or LlamaCpp directly with `[huggingface]` and/or `[llamacpp]` pip options.
 - `pip install "headjack-keymaker[huggingface]"`
 - `pip install "headjack-keymaker[llamacpp]"`
 - `pip install "headjack-keymaker[all]"` includes both huggingface and llamacpp
@@ -476,7 +476,7 @@ filled_in.completions.countdown
 
 First, note that `Prompt`s and `Completion`s are a few of the fundamental types in Keymaker.
 
-To use KeyMaker with a language model, you need to first create a `Model` object. For example, to use KeyMaker with Hugging Face's GPT-2 model:
+To use Keymaker with a language model, you need to first create a `Model` object. For example, to use Keymaker with Hugging Face's GPT-2 model:
 
 Some basic imports
 ```python
@@ -569,7 +569,7 @@ If you've read through the above examples, you'll have noted that there are mult
 
 ### Accessing Completions
 
-When using KeyMaker to generate text with constraints, you can name the completions to easily access them later.
+When using Keymaker to generate text with constraints, you can name the completions to easily access them later.
 All completions are stored in the `completions` attribute of a `Prompt` object.
 
 Here's an example of how to access both named and unnamed completions:
@@ -618,7 +618,7 @@ In the example, we create a `Prompt` object with the text "The weather is ". We 
 We access the unnamed completion by indexing the `completions` attribute of the `Prompt` object, and the named completion by using the `name` as an attribute of the `completions` attribute.
 
 ### Omitting Completions or Prompt Portions with `.complete`
-Again, KeyMaker's goal is to afford you all the power of LLM completions, with controlled outputs from the comfort and power of plain Python.
+Again, Keymaker's goal is to afford you all the power of LLM completions, with controlled outputs from the comfort and power of plain Python.
 
 With that in mind, we can do something seemingly basic but that may not be possible or obvious in other frameworks - not use things we've made!
 
@@ -655,10 +655,10 @@ prompt = await prompt.complete(...)
 ### Model Options
 As it stands, the models available for use out of the box are `Huggingface` models and APIs implementing the OpenAI spec.
 
-KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Model](#creating-custom-models)
+Keymaker is also designed to make it as simple as possible for you to [Add Your Own Model](#creating-custom-models)
 
 #### Huggingface (direct)
-Huggingface models are optional, and you need to install KeyMaker with `pip install "headjack-keymaker[huggingface]"`, then, simply import the `Huggingface` `Model` class:
+Huggingface models are optional, and you need to install Keymaker with `pip install "headjack-keymaker[huggingface]"`, then, simply import the `Huggingface` `Model` class:
 ```python
 from keymaker.models import Huggingface
 ```
@@ -678,7 +678,7 @@ chat_model=gpt4(...optional configurations for underlying `OpenAIChat` otherwise
 
 #### Llama-CPP
 
-KeyMaker also provides an implementation wrapper around [Llama-Cpp-Python](https://abetlen.github.io/llama-cpp-python)
+Keymaker also provides an implementation wrapper around [Llama-Cpp-Python](https://abetlen.github.io/llama-cpp-python)
 
 ```python
 from keymaker.models import LlamaCpp
@@ -699,7 +699,7 @@ This can be enabled by installing the optional dependencies with `pip install "h
 #### OpenAI Compatible Servers
 **Coming Soon - Ripe for contibution**
 
-KeyMaker is looking to make the OpenAI `Model` support other compatible APIs. Simply pass a compatible tokenizer and go!
+Keymaker is looking to make the OpenAI `Model` support other compatible APIs. Simply pass a compatible tokenizer and go!
 
 ##### Llama-CPP
 See [Llama-Cpp-Python](https://abetlen.github.io/llama-cpp-python/#web-server)
@@ -710,7 +710,7 @@ See [vLLM](https://vllm.readthedocs.io/en/latest/getting_started/quickstart.html
 
 ### Using Chat models
 
-KeyMaker provides functionality for using roles with chat models. While this is optional, lack of usage could potentially impact performance.
+Keymaker provides functionality for using roles with chat models. While this is optional, lack of usage could potentially impact performance.
 
 Chat models (e.g. `OpenAIChat` or the aliases `chatgpt`, `gpt`) have the following default attributes (which can vary should you [Add Your Own Model](#creating-custom-models))
 ```python
@@ -740,7 +740,7 @@ would be seen by the chat model as:
 
 #### Mixing Chat and Non-Chat Models
 
-Further, should you want to intermingle the usage of chat and non-chat continuations, KeyMaker provides utilities to do so:
+Further, should you want to intermingle the usage of chat and non-chat continuations, Keymaker provides utilities to do so:
 ```python
 from keymaker.utils import strip_tags
 
@@ -765,9 +765,9 @@ Assistant: "Dogs are absolutely pawsome!"')
 
 ### Using Constraints
 
-KeyMaker provides several out-of-the-box constraints that can be applied when completing prompts.
+Keymaker provides several out-of-the-box constraints that can be applied when completing prompts.
 
-KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Constraint](#creating-custom-constraints)
+Keymaker is also designed to make it as simple as possible for you to [Add Your Own Constraint](#creating-custom-constraints)
 
 Let's go through some of the built-in constraint types and how to use them.
 
@@ -792,7 +792,7 @@ print(prompt)
 Note: This example is a little contrived in that there is static completion in regex itself.
 This is not always the most efficient way to do some completions.
 You may consider doing multiple completions in a case like this.
-KeyMaker does its best to avoid unnecessary calls to the model if a token is clearly determined.
+Keymaker does its best to avoid unnecessary calls to the model if a token is clearly determined.
 
 #### ParserConstraint
 
@@ -889,7 +889,7 @@ print(prompt.completions.world_description)
 
 #### Combining Constraints
 
-KeyMaker also allows you to combine multiple constraints using logical operators like `AndConstraint`, `OrConstraint`, and `NotConstraint`.
+Keymaker also allows you to combine multiple constraints using logical operators like `AndConstraint`, `OrConstraint`, and `NotConstraint`.
 
 ```python
 from keymaker.constraints import OrConstraint, RegexConstraint, OptionsConstraint
@@ -927,7 +927,7 @@ prompt.completions[0].value==15
 
 ### Streaming Completions
 
-KeyMaker provides a very slim and intuitive means to access completion generation as it happens.
+Keymaker provides a very slim and intuitive means to access completion generation as it happens.
 
 Simply pass a prompt `complete` an asynchronous function
 
@@ -963,7 +963,7 @@ Further, the stream was fed a terminal signal of `None` indicated the stream was
 
 ### Decoding Parameters
 
-KeyMaker allows you to set some of the parameters used to sample tokens.
+Keymaker allows you to set some of the parameters used to sample tokens.
 
 ```python
 from keymaker.types import Decoder, DecodingStrategy
@@ -978,7 +978,7 @@ prompt = await prompt.complete(..., decoder = decoder)
 
 ### Creating Custom Models
 
-To create a custom model, you need to extend the `Model` class provided by KeyMaker and implement the required methods. Here's an example of creating a custom model:
+To create a custom model, you need to extend the `Model` class provided by Keymaker and implement the required methods. Here's an example of creating a custom model:
 
 ```python
 from keymaker.models.base import Model
@@ -1013,7 +1013,7 @@ class CustomModel(Model):
     # ...
 ```
 
-You can then use your custom model with KeyMaker as you would with the built-in models:
+You can then use your custom model with Keymaker as you would with the built-in models:
 
 ```python
 model = CustomModel(...)
@@ -1024,7 +1024,7 @@ print(prompt)
 
 ### Creating Custom Constraints
 
-To create a custom constraint, you need to extend the `Constraint` class provided by KeyMaker and implement the `constrain_tokens` method. Here's an example of creating a custom constraint:
+To create a custom constraint, you need to extend the `Constraint` class provided by Keymaker and implement the `constrain_tokens` method. Here's an example of creating a custom constraint:
 
 ```python
 from keymaker.constraints.base import Constraint
@@ -1042,7 +1042,7 @@ class CustomConstraint(Constraint):
         pass
 ```
 
-You can then use your custom constraint with KeyMaker as you would with the built-in constraints:
+You can then use your custom constraint with Keymaker as you would with the built-in constraints:
 
 ```python
 constraint = CustomConstraint(...)
@@ -1057,12 +1057,12 @@ Contributions are very welcome. Simply fork the repository and open a pull reque
 
 ## Acknowledgements
 
-Some constraints in KeyMaker are derived from the work of [Matt Rickard](https://github.com/r2d4). Specifically, ReLLM and ParserLLM.
+Some constraints in Keymaker are derived from the work of [Matt Rickard](https://github.com/r2d4). Specifically, ReLLM and ParserLLM.
 Similar libraries such as [LMQL](https://github.com/eth-sri/lmql) and [Guidance](https://github.com/microsoft/guidance) have surved as motiviation.
 
 ## Disclaimer
 
-KeyMaker and its contributors bear no responsibility for any harm done by its usage either directly or indirectly including but not limited to costs incurred by using the package (KeyMaker) with LLM vendors. The package is provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+Keymaker and its contributors bear no responsibility for any harm done by its usage either directly or indirectly including but not limited to costs incurred by using the package (Keymaker) with LLM vendors. The package is provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
 
 ## Copyright
 Copyright 2023- Nick Ouellet (nick@ouellet.dev)

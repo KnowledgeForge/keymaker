@@ -9,9 +9,9 @@ lightgallery: true
 ---
 # Using Constraints
 
-KeyMaker provides several out-of-the-box constraints that can be applied when completing prompts.
+Keymaker provides several out-of-the-box constraints that can be applied when completing prompts.
 
-KeyMaker is also designed to make it as simple as possible for you to [Add Your Own Constraint](#creating-custom-constraints)
+Keymaker is also designed to make it as simple as possible for you to [Add Your Own Constraint](#creating-custom-constraints)
 
 Let's go through some of the built-in constraint types and how to use them.
 
@@ -36,7 +36,7 @@ print(prompt)
 Note: This example is a little contrived in that there is static completion in regex itself.
 This is not always the most efficient way to do some completions.
 You may consider doing multiple completions in a case like this.
-KeyMaker does its best to avoid unnecessary calls to the model if a token is clearly determined.
+Keymaker does its best to avoid unnecessary calls to the model if a token is clearly determined.
 
 #### ParserConstraint
 
@@ -133,7 +133,7 @@ print(prompt.completions.world_description)
 
 #### Combining Constraints
 
-KeyMaker also allows you to combine multiple constraints using logical operators like `AndConstraint`, `OrConstraint`, and `NotConstraint`.
+Keymaker also allows you to combine multiple constraints using logical operators like `AndConstraint`, `OrConstraint`, and `NotConstraint`.
 
 ```python
 from keymaker.constraints import OrConstraint, RegexConstraint, OptionsConstraint

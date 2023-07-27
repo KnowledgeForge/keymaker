@@ -6,11 +6,11 @@ weight: 4
 ---
 # Streaming Completions and Custom Decoding Parameters
 
-In this section, we will explore the usage of streaming completions and custom decoding parameters in KeyMaker.
+In this section, we will explore the usage of streaming completions and custom decoding parameters in Keymaker.
 
 ## Streaming Completions
 
-KeyMaker allows you to access completion generation as it happens by passing an asynchronous function to the `complete` method. This can be useful for situations where you want to display the generated text in real-time, such as in a chat application.
+Keymaker allows you to access completion generation as it happens by passing an asynchronous function to the `complete` method. This can be useful for situations where you want to display the generated text in real-time, such as in a chat application.
 
 Here's an example of streaming completions:
 
@@ -38,7 +38,7 @@ prompt = await prompt.complete(
 
 ## Custom Decoding Parameters
 
-KeyMaker allows you to set some of the decoding parameters used to sample tokens during the text generation process. You can customize the temperature, top_p, and decoding strategy.
+Keymaker allows you to set some of the decoding parameters used to sample tokens during the text generation process. You can customize the temperature, top_p, and decoding strategy.
 
 Here's an example of using custom decoding parameters:
 

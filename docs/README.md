@@ -1,4 +1,4 @@
-# KeyMaker Docs
+# Keymaker Docs
 
 ## Running the Docs Site Locally
 

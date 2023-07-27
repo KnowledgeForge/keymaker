@@ -37,11 +37,11 @@ summaryLength = 30
   # enable_anchor_link = true
 
   [params.homepage_meta_tags]
-    meta_description = "KeyMaker is the most powerful, flexible and extensible way to control the output of large language models."
+    meta_description = "Keymaker is the most powerful, flexible and extensible way to control the output of large language models."
     meta_og_title = "Keymaker"
     meta_og_type = "website"
     meta_og_url = "https://keymaker.headjack.ai/"
-    meta_og_description = "KeyMaker is the most powerful, flexible and extensible way to control the output of large language models."
+    meta_og_description = "Keymaker is the most powerful, flexible and extensible way to control the output of large language models."
     meta_twitter_card = "Keymaker"
 
   [params.logo]

@@ -10,11 +10,11 @@ lightgallery: true
 
 # Advanced Prompt Formatting and Control Flow
 
-In this section, we will explore advanced prompt formatting and plain control flow with KeyMaker.
+In this section, we will explore advanced prompt formatting and plain control flow with Keymaker.
 
 ## Advanced Prompt Formatting
 
-KeyMaker provides powerful and flexible ways to format prompts. You can use the `.format()` method to generate completions based on the order of arguments, named arguments, or even dynamic arguments using callables and generators. Here's an example:
+Keymaker provides powerful and flexible ways to format prompts. You can use the `.format()` method to generate completions based on the order of arguments, named arguments, or even dynamic arguments using callables and generators. Here's an example:
 
 ```python
 from keymaker import Prompt, Completion, CompletionConfig

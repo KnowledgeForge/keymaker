@@ -9,11 +9,11 @@ lightgallery: true
 ---
 # Accessing Completions and Working with Chat Models
 
-In this section, we will explore how to access completions and work with chat models in KeyMaker.
+In this section, we will explore how to access completions and work with chat models in Keymaker.
 
 ## Accessing Completions
 
-When you generate completions with KeyMaker, you can access them through the `completions` attribute of a `Prompt` object. Here's an example of how to access both named and unnamed completions:
+When you generate completions with Keymaker, you can access them through the `completions` attribute of a `Prompt` object. Here's an example of how to access both named and unnamed completions:
 
 ```python
 from keymaker import Prompt
@@ -49,7 +49,7 @@ print(f"Named completion: {named_completion}")
 
 ## Working with Chat Models
 
-KeyMaker provides functionality for using roles with chat models. This can help improve performance by providing the model with a clearer context for the conversation. Here's an example of using roles with a chat model:
+Keymaker provides functionality for using roles with chat models. This can help improve performance by providing the model with a clearer context for the conversation. Here's an example of using roles with a chat model:
 
 ```python
 from keymaker import Prompt

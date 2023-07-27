@@ -9,11 +9,11 @@ lightgallery: true
 ---
 # Advanced Usage and Customization
 
-In this section, we will explore more advanced usage of KeyMaker, including working with multiple models, custom constraints, and custom models.
+In this section, we will explore more advanced usage of Keymaker, including working with multiple models, custom constraints, and custom models.
 
 ## Working with Multiple Models
 
-KeyMaker allows you to use multiple models in a single prompt. You can switch between models when generating completions to take advantage of their specific capabilities. Here's an example of using both a chat model and a custom model:
+Keymaker allows you to use multiple models in a single prompt. You can switch between models when generating completions to take advantage of their specific capabilities. Here's an example of using both a chat model and a custom model:
 
 ```python
 from keymaker import Prompt
@@ -42,7 +42,7 @@ print(completed_prompt)
 
 ## Creating Custom Constraints
 
-To create a custom constraint, extend the `Constraint` class provided by KeyMaker and implement the `constrain_tokens` method:
+To create a custom constraint, extend the `Constraint` class provided by Keymaker and implement the `constrain_tokens` method:
 
 ```python
 from keymaker.constraints.base import Constraint
@@ -58,7 +58,7 @@ class CustomConstraint(Constraint):
         pass
 ```
 
-Use your custom constraint with KeyMaker as you would with built-in constraints:
+Use your custom constraint with Keymaker as you would with built-in constraints:
 
 ```python
 constraint = CustomConstraint(...)
@@ -69,7 +69,7 @@ print(prompt)
 
 ## Creating Custom Models
 
-To create a custom model, extend the `Model` class provided by KeyMaker and implement the required methods:
+To create a custom model, extend the `Model` class provided by Keymaker and implement the required methods:
 
 ```python
 from keymaker.models.base import Model
@@ -96,7 +96,7 @@ class CustomModel(Model):
         pass
 ```
 
-Use your custom model with KeyMaker as you would with built-in models (here demonstrated with a single completion):
+Use your custom model with Keymaker as you would with built-in models (here demonstrated with a single completion):
 
 ```python
 model = CustomModel(...)

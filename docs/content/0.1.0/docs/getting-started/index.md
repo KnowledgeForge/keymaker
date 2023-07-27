@@ -3,19 +3,19 @@ title: 'Getting Started'
 date: 2019-02-11T19:30:08+10:00
 draft: false
 weight: 4
-summary: How to get started with KeyMaker.
+summary: How to get started with Keymaker.
 ---
 
-# Getting Started with KeyMaker
+# Getting Started with Keymaker
 
-KeyMaker is a Python library that provides a powerful and flexible way to control the output of large language models. This guide will walk you through installing KeyMaker and using it to generate some completions including:
+Keymaker is a Python library that provides a powerful and flexible way to control the output of large language models. This guide will walk you through installing Keymaker and using it to generate some completions including:
   - with constraints
   - different models
   - streaming
 
 ## Installation
 
-Install KeyMaker with:
+Install Keymaker with:
 
 ```shell
 pip install headjack-keymaker
@@ -41,7 +41,7 @@ pip install headjack-keymaker[all]
 
 ## Basic Usage
 
-Import KeyMaker:
+Import Keymaker:
 
 ```python
 from keymaker import Prompt
@@ -76,7 +76,7 @@ print(completed)
 
 ## Formatting and Constraints
 
-Beyond one-off completions, KeyMaker supports an extremely flexible formatted completion and of course constraints.
+Beyond one-off completions, Keymaker supports an extremely flexible formatted completion and of course constraints.
 
 Import a constraint and `CompletionConfig`:
 
@@ -198,4 +198,4 @@ print(age, type(age.value))
 # 33 <class 'int'>
 ```
 
-Congratulations! You've completed the guide to getting started with KeyMaker.
+Congratulations! You've completed the guide to getting started with Keymaker.
