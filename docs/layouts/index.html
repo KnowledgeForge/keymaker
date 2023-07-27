@@ -1,0 +1,95 @@
+{{ define "title" }}{{ .Site.Title }}{{ end}}
+{{ define "header_css" }}{{ end }}
+{{ define "body_classes" }}page-home{{ end }}
+{{ define "header_classes" }}{{ end }}
+
+{{ define "meta_tags" }}
+<meta name="description" content="{{ .Site.Params.homepage_meta_tags.meta_description }}" />
+<meta property="og:title" content="{{ .Site.Params.homepage_meta_tags.meta_og_title }}" />
+<meta property="og:type" content="{{ .Site.Params.homepage_meta_tags.meta_og_type }}" />
+<meta property="og:url" content="{{ .Site.Params.homepage_meta_tags.meta_og_url }}" />
+<meta property="og:image" content="{{ .Site.Params.homepage_meta_tags.meta_og_image }}" />
+<meta property="og:description" content="{{ .Site.Params.homepage_meta_tags.meta_og_description }}" />
+<meta name="twitter:card" content="{{ .Site.Params.homepage_meta_tags.meta_twitter_card }}" />
+<meta name="twitter:site" content="{{ .Site.Params.homepage_meta_tags.meta_twitter_site }}" />
+<meta name="twitter:creator" content="{{ .Site.Params.homepage_meta_tags.meta_twitter_creator }}" />
+{{ end }}
+
+{{ define "main" }}
+<div class="strip">
+  <div class="container pt-4 pb-16">
+    <div class="row">
+      <div class="col-12">
+        <h1 class="title">{{ .Title | default .Site.Title }}</h1>
+        <div class="content">
+          {{ if .Content }}
+          {{ .Content }}
+          {{ else }}
+          <p>{{ .Site.Params.homepage_intro }}</p>
+          {{ end }}
+        </div>
+        <a class="button button-primary mb-2" href="{{ .Site.Params.homepage_button_link | relURL }}">
+          {{ .Site.Params.homepage_button_text }}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ if .Site.Params.homepage_image }}
+<div class="strip">
+  <div class="container pt-4 pb-4">
+    <div class="row justify-content-center">
+        <div id="termynal" data-termynal>
+            <span data-ty="input">pip install headjack-keymaker</span>
+            <span data-ty="progress"></span>
+            <span data-ty>Successfully installed keymaker</span>
+        </div>
+    </div>
+  </div>
+</div>
+{{ end }}
+
+<div class="container pt-4 pb-16">
+  <div class="row">
+  <div class="col-lg-12">
+    <h4 class="page-header">Keymaker Features</h4>  
+    <div class="grid-container">  
+      <div class="card">  
+        <img src="https://img.icons8.com/?size=512&id=121464&format=png" alt="Pure Python Icon">  
+        <h4>Pure Python</h4>  
+        <p>Keymaker is built with pure Python - no Domain-Specific Languages - allowing you to leverage the full power and flexibility of Python when constructing your workflows.</p>  
+      </div>  
+      <div class="card">  
+        <img src="https://img.icons8.com/?size=512&id=6DiJMqDiAyYB&format=png" alt="Powerful Constraints Icon">  
+        <h4>Powerful Constraints</h4>  
+        <p>Keymaker offers a variety of built-in constraints to control the generated output, ensuring that it meets specific requirements or follows a desired format.</p>  
+      </div>  
+      <div class="card">  
+        <img src="https://img.icons8.com/?size=512&id=0oWODUJHzZL6&format=png" alt="Robust Integrations Icon">  
+        <h4>Robust Integrations</h4>  
+        <p>Keymaker supports multiple large language models out-of-the-box and can be extended to work with custom models, making it easy to adapt to various environments and technologies.</p>  
+      </div>  
+      <div class="card">  
+        <img src="https://img.icons8.com/?size=1x&id=mui3oke5Lft1&format=png" alt="Easy to Use Icon">  
+        <h4>Easy to Use</h4>  
+        <p>With Keymaker, anyone with Python knowledge can create powerful prompts and control the output of large language models. No other learnings required!</p>  
+      </div>  
+      <div class="card">  
+        <img src="https://img.icons8.com/?size=512&id=bprXkvrC7p9W&format=png" alt="Open Source Icon">  
+        <h4>Open Source</h4>  
+        <p>Keymaker is fully open source with a trivial codebase. We excitedly welcome you to contribute improvements, share your experiences, and engage with the community. Have any questions? Check out our <a href="https://github.com/KnowledgeForge/keymaker">GitHub repository</a>.</p>  
+      </div>  
+      <div class="card">  
+        <img src="https://img.icons8.com/?size=512&id=46879&format=png" alt="Testable Icon">  
+        <h4>Testable</h4>  
+        <p>Keymaker's design means all logic for prompt completions is fully testable, unlike alternatives.</p>  
+      </div>  
+    </div>  
+  </div>  
+</div>  
+</div>
+{{ end }}
+
+{{ define "footer_js" }}
+{{ end }}
