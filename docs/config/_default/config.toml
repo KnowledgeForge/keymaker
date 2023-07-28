@@ -26,12 +26,17 @@ summaryLength = 30
     url = "/docs/"
     weight = 2
 
+
+
+
 [params]
   google_analytics_id=""
   homepage_button_link = '/docs'
   homepage_button_text = 'Read The Docs'
   homepage_intro = 'The most powerful, flexible and extensible way to control the output of large language models.'
   homepage_image = '/images/terminal.gif'
+  github_link = 'https://github.com/KnowledgeForge/keymaker'
+  github_logo = "/images/github-mark.svg"
 
   ## You can enable to add anchor links to header elements
   # enable_anchor_link = true
