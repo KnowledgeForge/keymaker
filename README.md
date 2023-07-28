@@ -14,6 +14,11 @@
     </a>
     <br>
     <br>
+    <a href="https://app.netlify.com/sites/headjack-keymaker/deploys" target="_blank">
+      <img src="https://api.netlify.com/api/v1/badges/9b36dc49-67a6-4254-bb2a-6ad6a2b7417d/deploy-status" alt="Netlify">
+    </a>
+    <br>
+    <br>
     <a href="https://github.com/KnowledgeForge/keymaker/issues">Report Bug</a>
     <br>
   </p>
