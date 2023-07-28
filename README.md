@@ -313,11 +313,16 @@ Assistant: 5, 4, {countdown}
 #### Now, we generate some completions.
 Here are the different types of arguments that can be passed to the .format() method on a prompt object:
 
-- Stringable: Any string or object that can be converted to a string, like str, int, etc. This just formats the prompt with that static string.
+- `Stringable`: Any string or object that can be converted to a string, like str, int, etc. This just formats the prompt with that static string.
 
-- Callable[[Prompt], Union[Stringable, CompletionConfig]]: A callable that takes the Prompt as an argument and returns either a Stringable or CompletionConfig. This allows dynamically formatting the prompt based on the state of the Prompt.
+- `CompletionConfig`: the basic unit of requestion completion. Accepts all parameters necessary to generate a completion.
 
-- Callable[[Prompt], Iterable[Union[Stringable, CompletionConfig]]]: A callable that takes the Prompt and returns an iterable of Stringable or CompletionConfig objects. This allows dynamically formatting the prompt with multiple components based on the state of the Prompt.
+- `Callable[[Prompt], Union[Stringable, CompletionConfig]]`: A callable that takes the Prompt as an argument and returns either a Stringable or CompletionConfig. This allows dynamically formatting the prompt based on the state of the Prompt.
+
+- `Callable[[Prompt], Generator[Union[Stringable, CompletionConfig]]]`: A callable that takes the Prompt and returns an iterable of Stringable or CompletionConfig objects. This allows dynamically formatting the prompt with multiple components based on the state of the Prompt.
+
+
+
 
 TLDR:
 
