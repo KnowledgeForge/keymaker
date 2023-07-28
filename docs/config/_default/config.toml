@@ -1,4 +1,4 @@
-baseURL = "/"
+baseURL = "https://keymaker.headjack.ai"
 theme = "hugo-whisper-theme"
 languageCode = "en-us"
 title = "Keymaker"
