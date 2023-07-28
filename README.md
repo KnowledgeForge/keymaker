@@ -255,10 +255,6 @@ def my_log_function(some_completion):
 ```
 
 
-    <IPython.core.display.Javascript object>
-
-
-
 #### Keymaker Completion Configuration
 
 The following are the values that can be specified for Keymaker completion configuration, including prompt defaults and CompletionConfig parameters:
