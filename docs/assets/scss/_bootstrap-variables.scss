@@ -15,9 +15,9 @@ $container-max-widths: (
 
 $grid-gutter-width: 20px;
 
-$primary: #4b4c2b;
-$secondary: #f0b400;
-$black: #000000;
+$primary: #000000;
+$secondary: #ffca28;
+$black: #474747;
 
 // Links
 $link-color: $primary;
@@ -72,7 +72,7 @@ $spacers: map-merge(
 }  
 
 .card {  
-  background-color: #b9bcbe;  
+  background-color: #f0f0f0;  
   border-radius: 5px;  
   padding: 20px;  
   display: flex;  
