@@ -35,6 +35,9 @@ summaryLength = 30
   homepage_button_text = 'Read The Docs'
   homepage_intro = 'The most powerful, flexible and extensible way to control the output of large language models.'
   homepage_image = '/images/terminal.gif'
+  
+  discord_link = 'https://discord.gg/q7NBcspXnh'
+  discord_logo = "/images/discord.svg"
   github_link = 'https://github.com/KnowledgeForge/keymaker'
   github_logo = "/images/github-mark.svg"
 
