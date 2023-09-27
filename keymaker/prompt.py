@@ -252,6 +252,7 @@ class Prompt(str):
         return prompt
 
     async def complete(self, *completion_args, **completion_kwargs) -> "Prompt":
+
         if 'completion_config' in completion_kwargs:
             config = completion_kwargs['completion_config']
         else:
