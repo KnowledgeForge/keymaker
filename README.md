@@ -319,7 +319,9 @@ Here are the different types of arguments that can be passed to the .format() me
 
 - `Callable[[Prompt], Union[Stringable, CompletionConfig]]`: A callable that takes the Prompt as an argument and returns either a Stringable or CompletionConfig. This allows dynamically formatting the prompt based on the state of the Prompt.
 
-- `Callable[[Prompt], Iterable[Union[Stringable, CompletionConfig]]]`: A callable that takes the Prompt and returns an iterable of Stringable or CompletionConfig objects. This allows dynamically formatting the prompt with multiple components based on the state of the Prompt.
+- `Callable[[Prompt], Generator[Union[Stringable, CompletionConfig]]]`: A callable that takes the Prompt and returns an iterable of Stringable or CompletionConfig objects. This allows dynamically formatting the prompt with multiple components based on the state of the Prompt.
+
+
 
 
 TLDR:
