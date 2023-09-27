@@ -48,6 +48,9 @@ class ParserConstraint(Constraint):
         poss_completion = partial_completion + model.tokens[token_id]
         return any((pattern.fullmatch(poss_completion, partial=True) for pattern in patterns))
 
+    def __hash__(self) -> int:
+        return id(self)
+
     @lru_cache
     def _compile_re(self, pattern: str) -> re.Pattern[str]:
         try:
@@ -79,7 +82,9 @@ class ParserConstraint(Constraint):
                 except Exception:
                     pass
 
-        regex_patterns = [self._compile_re(lex) for lex in valid_next_lex]
+        regex_patterns = []
+        for lex in valid_next_lex:
+            regex_patterns.append(self._compile_re(lex))
 
         with ThreadPoolExecutor():
             valid_token_ids = set(
