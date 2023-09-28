@@ -123,7 +123,7 @@ class CompletionConfig:
     name: Optional[str] = None
     max_tokens: Optional[int] = None
     decoder: Optional[Decoder] = None
-    stream: Optional[Callable[[Optional['Completion']], Awaitable[Any]]] = None
+    stream: Optional[Callable[[Optional["Completion"]], Awaitable[Any]]] = None
     map_fn: Callable[[Completion], Stringable] = noop
     timeout: float = 10.0
     truncate: bool = False
@@ -166,8 +166,8 @@ class Prompt(str):
     def __init__(self, prompt: str, *default_args, completions: Optional[Completions] = None, **default_kwargs):
         self.prompt = prompt
         self.completions = completions or Completions()
-        if 'completion_config' in default_kwargs:
-            self._default_completion_config = default_kwargs['completion_config']
+        if "completion_config" in default_kwargs:
+            self._default_completion_config = default_kwargs["completion_config"]
         else:
             self._default_completion_config = CompletionConfig(*default_args, **default_kwargs)
 
@@ -252,9 +252,8 @@ class Prompt(str):
         return prompt
 
     async def complete(self, *completion_args, **completion_kwargs) -> "Prompt":
-
-        if 'completion_config' in completion_kwargs:
-            config = completion_kwargs['completion_config']
+        if "completion_config" in completion_kwargs:
+            config = completion_kwargs["completion_config"]
         else:
             config = CompletionConfig(*completion_args, **completion_kwargs)
         config = config | self._default_completion_config

@@ -20,15 +20,15 @@ def format_parser(s: str):
 
     @generate
     def helper():
-        text = yield regex(r'[^{}]*')
+        text = yield regex(r"[^{}]*")
         bracket1 = yield lbrack.optional()
         bracket2 = yield lbrack.optional()
         if bracket1 and bracket2:
-            rest = yield (regex(r'[^{}]*}'))
+            rest = yield (regex(r"[^{}]*}"))
             yield rbrack
             return [text + "{" + rest]
         if bracket1:
-            inner = yield regex(r'\s*[a-zA-Z_]*[a-zA-Z0-9_]*\s*') | regex(r'\s*[a-zA-Z_][a-zA-Z0-9_]*\s*')
+            inner = yield regex(r"\s*[a-zA-Z_]*[a-zA-Z0-9_]*\s*") | regex(r"\s*[a-zA-Z_][a-zA-Z0-9_]*\s*")
             yield rbrack
             return [text, Format(inner or None)]
         return [text]

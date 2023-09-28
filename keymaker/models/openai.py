@@ -81,26 +81,26 @@ class OpenAIChat(ChatModel):
             self.allowed_roles,
         )
 
-        if messages[-1]['role'] != self.default_role:
-            messages.append({'role': self.default_role, 'content': " "})
+        if messages[-1]["role"] != self.default_role:
+            messages.append({"role": self.default_role, "content": " "})
         gen_kwargs = {}
         if temperature := decoder.temperature:
-            gen_kwargs['temperature'] = temperature
+            gen_kwargs["temperature"] = temperature
         if top_p := decoder.top_p:
-            gen_kwargs['top_p'] = top_p
+            gen_kwargs["top_p"] = top_p
         if top_k := decoder.top_k:
-            gen_kwargs['top_k'] = top_k
+            gen_kwargs["top_k"] = top_k
         if decoder.strategy == DecodingStrategy.GREEDY:
             # try to make the sampling as deterministic as possible
             # to select only the one top token
-            gen_kwargs['temperature'] = 0
-            gen_kwargs['top_p'] = (
+            gen_kwargs["temperature"] = 0
+            gen_kwargs["top_p"] = (
                 1 / self.vocab_size
             )  # select only n tokens to get over 1/self.vocab_size, should always be a single token
             if (
-                'top_k' in gen_kwargs
+                "top_k" in gen_kwargs
             ):  # non-openai yet openai-compliant apis may also support topk while the official api does not
-                gen_kwargs['top_k'] = 1
+                gen_kwargs["top_k"] = 1
 
         payload = {
             "messages": messages,
@@ -236,19 +236,19 @@ class OpenAICompletion(Model):
 
         gen_kwargs = {}
         if temperature := decoder.temperature:
-            gen_kwargs['temperature'] = temperature
+            gen_kwargs["temperature"] = temperature
         if top_p := decoder.top_p:
-            gen_kwargs['top_p'] = top_p
+            gen_kwargs["top_p"] = top_p
         if top_k := decoder.top_k:
-            gen_kwargs['top_k'] = top_k
+            gen_kwargs["top_k"] = top_k
         if decoder.strategy == DecodingStrategy.GREEDY:
             # try to make the sampling as deterministic as possible
             # to select only the one top token
-            gen_kwargs['top_p'] = (
+            gen_kwargs["top_p"] = (
                 1 / self.vocab_size
             )  # select only n tokens to get over 1/self.vocab_size, should always be a single token
-            if 'top_k' in gen_kwargs:
-                gen_kwargs['top_k'] = 1
+            if "top_k" in gen_kwargs:
+                gen_kwargs["top_k"] = 1
         payload = {"prompt": text, "logit_bias": logit_bias, "model": self.model_name, "max_tokens": max_tokens, "logprobs": 5, **gen_kwargs}  # type: ignore
 
         async with aiohttp.ClientSession() as session:
@@ -287,7 +287,7 @@ class OpenAICompletion(Model):
         def result_handler(response):
             delta = response.choices[0]
             return (
-                ("", 1) if "text" not in delta else (delta["text"], delta['logprobs']['token_logprobs']),  # content
+                ("", 1) if "text" not in delta else (delta["text"], delta["logprobs"]["token_logprobs"]),  # content
                 "finish_reason" in delta and delta["finish_reason"] is not None,  # complete generation
             )
 

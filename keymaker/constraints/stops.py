@@ -33,5 +33,5 @@ class StopsConstraint(Constraint):
         if match:
             if not self.include:
                 return completion_text
-            return completion_text + match.group('stop')
+            return completion_text + match.group("stop")
         return None

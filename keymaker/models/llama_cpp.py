@@ -24,7 +24,7 @@ math.log = lambda x: _log(x + 1e-10)  # type: ignore
 
 def try_decode(tok_bytes: bytes) -> str:
     try:
-        return tok_bytes.decode('utf-8')
+        return tok_bytes.decode("utf-8")
     except Exception:
         return str(tok_bytes)[2:-1]
 
@@ -74,7 +74,7 @@ class LlamaCpp(Model):
             self.model.set_cache(cache)
 
     def encode(self, text: str) -> TokenIds:
-        return self.model.tokenize(text.encode('utf-8'), add_bos=False)  # type: ignore
+        return self.model.tokenize(text.encode("utf-8"), add_bos=False)  # type: ignore
 
     def decode(self, ids: TokenIds) -> str:
         return try_decode(self.model.detokenize(ids))  # type: ignore
@@ -113,31 +113,31 @@ class LlamaCpp(Model):
         if decoder.strategy not in self.supported_decodings:
             raise ValueError(f"Unsupported decoding strategy for LlamaCpp model `{decoder.strategy}`.")
 
-        gen_kwargs = {'prompt': text, 'stream': True, 'max_tokens': max_tokens, "logprobs": 15}
+        gen_kwargs = {"prompt": text, "stream": True, "max_tokens": max_tokens, "logprobs": 15}
         if temperature := decoder.temperature:
-            gen_kwargs['temp'] = temperature
+            gen_kwargs["temp"] = temperature
         if top_p := decoder.top_p:
-            gen_kwargs['top_p'] = top_p
+            gen_kwargs["top_p"] = top_p
         if top_k := decoder.top_k:
-            gen_kwargs['top_k'] = top_k
+            gen_kwargs["top_k"] = top_k
 
         if decoder.strategy == DecodingStrategy.GREEDY:
             # try to make the sampling as deterministic as possible
             # to select only the one top token
-            gen_kwargs['top_p'] = (
+            gen_kwargs["top_p"] = (
                 1 / self.vocab_size
             )  # select only n tokens to get over .01, should virually always be a single token
-            if 'top_k' in gen_kwargs:
-                gen_kwargs['top_k'] = 1
+            if "top_k" in gen_kwargs:
+                gen_kwargs["top_k"] = 1
 
         if logits_processor := self._logit_processor(selected_tokens):
-            gen_kwargs['logits_processor'] = logits_processor
+            gen_kwargs["logits_processor"] = logits_processor
 
         token_generator = await run_in_threadpool(self.model, **gen_kwargs)  # type: ignore
         async for chunk in iterate_in_threadpool(token_generator):
-            delta = chunk['choices'][0]
-            if delta['text'] == "":
+            delta = chunk["choices"][0]
+            if delta["text"] == "":
                 break
-            token = delta['text']
-            logprob = delta['logprobs']['top_logprobs'][0][token] if delta['logprobs'] else [0]
+            token = delta["text"]
+            logprob = delta["logprobs"]["top_logprobs"][0][token] if delta["logprobs"] else [0]
             yield token, [logprob]

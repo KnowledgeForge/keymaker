@@ -36,7 +36,6 @@ class ModelConstraint(Constraint):
         completion_text: str,
         model: Model,
     ) -> TokenConstraint:
-
         preselected: Optional[Set[int]] = None
 
         if self.constraint is not None:
@@ -47,7 +46,7 @@ class ModelConstraint(Constraint):
         if self.top_k and preselected and len(preselected) <= self.top_k:
             return preselected
 
-        if not hasattr(self.model, 'probs'):
+        if not hasattr(self.model, "probs"):
             raise TypeError(f"Model constraint requires the model to implement `probs`. Got {self.model}.")
         probs = sorted((await self.model.probs(base_text + completion_text)), key=lambda e: e[1], reverse=True)  # type: ignore
         selected_tokens = set()

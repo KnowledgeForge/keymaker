@@ -49,8 +49,8 @@ def split_tags(
 
     content = regex(r"([^%]+|\n(?!\s*%))+")
 
-    message = seq(tag_begin, content, tag_complete).map(lambda x: {'role': x[0][1], 'content': x[1]}) | content.map(
-        lambda x: {'role': default_role, 'content': x},
+    message = seq(tag_begin, content, tag_complete).map(lambda x: {"role": x[0][1], "content": x[1]}) | content.map(
+        lambda x: {"role": default_role, "content": x},
     )
 
     message_parser = message.at_least(1)

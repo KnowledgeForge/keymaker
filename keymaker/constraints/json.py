@@ -52,7 +52,6 @@ class JsonConstraint(Constraint):
     allow_boolean: bool = True
 
     def __post_init__(self):
-
         if self.keys:
             key = optional_whitespace(string('"') >> (alt(*[string(key for key in self.keys)])) << string('"'))
         else:

@@ -85,11 +85,11 @@ class Huggingface(Model):
             raise ValueError(f"Unsupported decoding strategy for Huggingface model `{decoder.strategy}`.")
         gen_kwargs = {}
         if temperature := decoder.temperature:
-            gen_kwargs['temperature'] = temperature
+            gen_kwargs["temperature"] = temperature
         if top_p := decoder.top_p:
-            gen_kwargs['top_p'] = top_p
+            gen_kwargs["top_p"] = top_p
         if top_k := decoder.top_k:
-            gen_kwargs['top_k'] = top_k
+            gen_kwargs["top_k"] = top_k
 
         if decoder.strategy == DecodingStrategy.SAMPLE:
             gen_kwargs["do_sample"] = True
