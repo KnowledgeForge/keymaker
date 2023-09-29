@@ -2,6 +2,7 @@
 
 import pytest
 import regex as re
+
 from keymaker import CompletionConfig, Prompt
 from keymaker.constraints import RegexConstraint
 
