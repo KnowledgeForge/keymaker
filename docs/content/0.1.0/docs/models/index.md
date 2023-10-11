@@ -30,6 +30,24 @@ from keymaker.models import chatgpt, gpt4
 chat_model=gpt4(...optional configurations for underlying `OpenAIChat` otherwise use defaults)
 ```
 
+##### Azure OpenAI
+
+To use the the Azure API with Keymaker is simple:
+
+As documented in the OpenAI Python API you can set the following to your values:
+```python
+import openai
+openai.api_type = "azure"
+openai.api_key = ""
+openai.api_base = "https://azureai....openai.azure.com/"
+openai.api_version = "..."
+```
+
+Then, simply use the `addtl_create_kwargs` on any OpenAI based Keymaker `Model`. Here shown with chatgpt alias:
+```python
+model = chatgpt(addtl_create_kwargs=dict(deployment_id="gpt-35-turbo-chatgpt"))
+```
+
 #### Llama-CPP
 
 Keymaker also provides an implementation wrapper around [Llama-Cpp-Python](https://abetlen.github.io/llama-cpp-python)

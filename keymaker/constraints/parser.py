@@ -44,7 +44,7 @@ class ParserConstraint(Constraint):
                 regex_map[term.name] = term.pattern.to_regexp()
         self._terminal_regexes = regex_map
 
-    def _is_valid_token(self, patterns: List[re.Pattern[str]], token_id: int, partial_completion: str, model: "Model") -> bool:
+    def _is_valid_token(self, patterns: List[re.Pattern], token_id: int, partial_completion: str, model: "Model") -> bool:
         poss_completion = partial_completion + model.tokens[token_id]
         return any((pattern.fullmatch(poss_completion, partial=True) for pattern in patterns))
 
@@ -52,7 +52,7 @@ class ParserConstraint(Constraint):
         return id(self)
 
     @lru_cache
-    def _compile_re(self, pattern: str) -> re.Pattern[str]:
+    def _compile_re(self, pattern: str) -> re.Pattern:
         try:
             return re.compile(self.ignore_pattern + pattern + self.ignore_pattern)
         except Exception:

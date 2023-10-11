@@ -21,11 +21,11 @@ class RegexConstraint(Constraint):
         Based on https://github.com/r2d4/rellm
     """
 
-    pattern: Union[str, re.Pattern[str]]
+    pattern: Union[str, re.Pattern]
     terminate_on_match: bool = True
 
     def __post_init__(self):
-        self._pattern: re.Pattern[str] = re.compile(self.pattern) if isinstance(self.pattern, str) else self.pattern
+        self._pattern: re.Pattern = re.compile(self.pattern) if isinstance(self.pattern, str) else self.pattern
 
     def _is_valid_token(self, token_id: int, partial_completion: str, model: "Model") -> bool:
         decoded_token = model.tokens[token_id]
