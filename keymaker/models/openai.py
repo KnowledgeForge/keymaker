@@ -204,7 +204,7 @@ class OpenAICompletion(Model):
     max_token_selection: int = 300
     max_total_tokens: int = 4000
     addtl_create_kwargs: Dict[str, Any] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         self._tokenizer = tiktoken.encoding_for_model(self.model_name)
         self.tokens = openai_tokens(self._tokenizer)

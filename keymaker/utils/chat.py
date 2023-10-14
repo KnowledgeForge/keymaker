@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Dict, FrozenSet, List
 if TYPE_CHECKING:
     from keymaker import Prompt
 
-from parsy import alt, regex, seq, string
+from parsy import ParseError, any_char, eof, generate, string, string_from
 
 
 def split_tags(
@@ -12,6 +12,7 @@ def split_tags(
     tag_end: str = "%",
     default_role: str = "assistant",
     roles: FrozenSet[str] = frozenset(("system", "user", "assistant")),
+    discard_default_whitespace: bool = True,
 ) -> List[Dict[str, str]]:
     """
     Splits a text string into a list of messages based on tags.
@@ -34,26 +35,44 @@ def split_tags(
         [{'role': 'assistant', 'content': 'You are a friendly bot\n'}, {'role': 'system', 'content': ''}, {'role': 'user', 'content': 'Can you help me calculate stuff?'}, {'role': 'assistant', 'content': 'Yes, how may I help you?\n'}, {'role': 'user', 'co...
     """
     text = str(text)
-    role = alt(*(string(s) for s in roles))
-    tag_begin = seq(
-        string(tag_start),
-        role,
-        string(tag_end),
-    )
-    tag_complete = seq(
-        string(tag_start),
-        string("/"),
-        role,
-        string(tag_end),
-    )
 
-    content = regex(r"([^%]+|\n(?!\s*%))+")
+    tag_begin = string(tag_start) >> string_from(*roles) << string(tag_end)
 
-    message = seq(tag_begin, content, tag_complete).map(lambda x: {"role": x[0][1], "content": x[1]}) | content.map(
-        lambda x: {"role": default_role, "content": x},
-    )
+    @generate
+    def tag_parser():
+        role = yield tag_begin
+        tag_complete = string(tag_start + "/") >> string(role) << string(tag_end)
+        content = yield any_char.until(tag_complete)
+        yield tag_complete
+        return {"role": role, "content": "".join(content)}
 
-    message_parser = message.at_least(1)
+    default = any_char.until(tag_begin | eof)
+
+    @generate
+    def message_parser():
+        tot = []
+        while True:
+            rec = None
+            try:
+                rec = yield default
+                if rec:
+                    content = "".join(rec)
+                    if not discard_default_whitespace or content.strip():
+                        tot.append({"role": default_role, "content": content})
+                    continue
+            except ParseError:
+                pass
+            try:
+                rec = yield tag_parser.many()
+                if rec:
+                    tot += rec
+                    continue
+            except ParseError:
+                pass
+            break
+
+        return tot
+
     return message_parser.parse(text)
 
 
