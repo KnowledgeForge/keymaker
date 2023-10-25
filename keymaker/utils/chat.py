@@ -1,10 +1,7 @@
 from typing import TYPE_CHECKING, Dict, FrozenSet, List
-
 if TYPE_CHECKING:
     from keymaker import Prompt
-
-from parsy import ParseError, any_char, eof, generate, string, string_from
-
+from parsy import ParseError, any_char, eof, generate, string, string_from, peek
 
 def split_tags(
     text: str,
@@ -12,7 +9,7 @@ def split_tags(
     tag_end: str = "%",
     default_role: str = "assistant",
     roles: FrozenSet[str] = frozenset(("system", "user", "assistant")),
-    discard_default_whitespace: bool = True,
+    discard_default_whitespace: bool = True
 ) -> List[Dict[str, str]]:
     """
     Splits a text string into a list of messages based on tags.
@@ -41,7 +38,7 @@ def split_tags(
     @generate
     def tag_parser():
         role = yield tag_begin
-        tag_complete = string(tag_start + "/") >> string(role) << string(tag_end)
+        tag_complete = (string(tag_start + "/") >> string(role) << string(tag_end)) | peek(eof)
         content = yield any_char.until(tag_complete)
         yield tag_complete
         return {"role": role, "content": "".join(content)}
@@ -85,7 +82,7 @@ def strip_tags(
         "user": "User: ",
         "assistant": "Assistant: ",
     },
-    sep: str = "\n",
+    sep: str = "\n"
 ) -> "Prompt":
     from keymaker import Prompt
 
