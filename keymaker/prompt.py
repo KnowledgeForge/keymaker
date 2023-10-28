@@ -28,7 +28,7 @@ class Completion(str):
     def __new__(
         cls,
         value: Stringable,
-        start: int,
+        start: Optional[int] = None,
         stop: Optional[int] = None,
         name: Optional[str] = None,
         chunk: bool = False,
@@ -42,7 +42,7 @@ class Completion(str):
     def __init__(
         self,
         value: Stringable,
-        start: int,
+        start: Optional[int] = None,
         stop: Optional[int] = None,
         name: Optional[str] = None,
         chunk: bool = False,
