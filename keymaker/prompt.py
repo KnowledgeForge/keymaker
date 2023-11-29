@@ -27,7 +27,7 @@ class Completion(str):
 
     def __new__(
         cls,
-        value: Stringable,
+        value: str,
         start: Optional[int] = None,
         stop: Optional[int] = None,
         name: Optional[str] = None,
@@ -41,24 +41,52 @@ class Completion(str):
 
     def __init__(
         self,
-        value: Stringable,
+        value: str,
         start: Optional[int] = None,
         stop: Optional[int] = None,
         name: Optional[str] = None,
         chunk: bool = False,
         score: Optional[float] = None,
     ):
-        self.value = value
-        self.start = start
-        self.stop = stop or (start + len(self))
-        self.chunk = chunk
-        self.name = name
-        self.score = score
+        self._value = value
+        self._start = start
+        self._stop = stop or (start + len(self))
+        self._chunk = chunk
+        self._name = name
+        self._score = score
+
+    @property
+    def text(self) -> str:
+        return str(self)
+
+    @property
+    def value(self) -> str:
+        return str(self._value) if isinstance(self._value, CompletionConfig) else self._value
+
+    @property
+    def start(self) -> Optional[int]:
+        return self._start
+
+    @property
+    def stop(self) -> Optional[int]:
+        return self._stop
+
+    @property
+    def chunk(self) -> bool:
+        return self._chunk
+
+    @property
+    def name(self) -> Optional[str]:
+        return self._name
+
+    @property
+    def score(self) -> Optional[float]:
+        return self._score
 
     def __repr__(self) -> str:
         return f"Completion(text='{self}', value=`{self.value}`, start={self.start}, stop={self.stop}, name={self.name}, chunk={self.chunk}, score={self.score})"
 
-    def map(self, fn: Callable[["Completion"], Stringable]) -> "Completion":
+    def map(self, fn: Callable[["Completion"], str]) -> "Completion":
         mapped = fn(self)
         return Completion(
             value=mapped,
@@ -72,45 +100,33 @@ class Completion(str):
 
 class Completions:
     def __init__(self):
-        self._completions: List[Completion] = []
-        self._named_completions: Dict[str, Union[List[Completion], Completion]] = {}
+        self._completions: Dict[Union[str, int], List[Completion]] = {}
 
     def __repr__(self) -> str:
-        return f"Completions({self._completions}, {self._named_completions})"
+        return f"Completions({self._completions})"
 
-    def add(self, completion, name=None):
-        if name is not None:
-            if name in self._named_completions:
-                extant = self._named_completions[name]
-                if isinstance(extant, list):
-                    extant.append(completion)
-                else:
-                    self._named_completions[name] = [extant, completion]
-            else:
-                self._named_completions[name] = completion
+    def add(self, completion, name):
+        if name in self._completions:
+            self._completions[name].append(completion)
         else:
-            self._completions.append(completion)
+            self._completions[name]=[completion]
 
     def __getitem__(self, key):
-        if isinstance(key, int):
-            return self._completions[key]
-        else:
-            return self._named_completions.get(key)
+        return self._completions[key]
 
     def __getattr__(self, name):
-        if name in self._named_completions:
-            return self._named_completions[name]
+        if name in self._completions:
+            return self._completions[name]
         else:
             raise AttributeError(f"'Completions' object has no attribute '{name}'")
 
     def __or__(self, other):
         if isinstance(other, Completions):
             combined = Completions()
-            combined._completions = self._completions + other._completions
-            combined._named_completions = {
-                **self._named_completions,
-                **other._named_completions,
-            }
+            for k,v in self._completions.items():
+                combined.add(v, k)
+            for k,v in other._completions.items():
+                combined.add(v, k)
             return combined
         else:
             raise TypeError(f"unsupported operand type(s) for |: 'Completions' and '{type(other).__name__}'")
@@ -209,7 +225,7 @@ class Prompt(str):
 
     async def format(self, *args: FormatArg, **kwargs: FormatArg) -> "Prompt":  # type: ignore
         formattings = format_parser(self)
-        prompt = self[:0]
+        prompt = self
         unnamed_index = 0
         default_stream = self._default_completion_config.stream or anoop
         for part in formattings:
@@ -226,14 +242,14 @@ class Prompt(str):
                 config = kwargs[name]
             addition = None
             if isinstance(config, CompletionConfig):
-                config.name = name if name is not None else config.name
+                config.name = config.name or name or unnamed_index
                 prompt = await prompt.complete(completion_config=config)
             elif callable(config):
                 config = config(prompt)  # type: ignore
                 if isinstance(config, Generator):
                     for config_chunk in config:
                         if isinstance(config_chunk, CompletionConfig):
-                            config_chunk.name = name if name is not None else config_chunk.name
+                            config_chunk.name = config_chunk.name or name or unnamed_index
                             prompt = await prompt.complete(completion_config=config_chunk)
                         else:
                             completion = Completion(config_chunk, len(prompt), None, None, False, None)
@@ -241,7 +257,7 @@ class Prompt(str):
                             prompt += completion
                 else:
                     if isinstance(config, CompletionConfig):
-                        config.name = name if name is not None else config.name
+                        config_chunk.name = config_chunk.name or name or unnamed_index
                         prompt = await prompt.complete(completion_config=config)
                     else:
                         addition = config
@@ -300,8 +316,8 @@ class Prompt(str):
         token_count = 0
         if constraint is None:
             generated = ""
-            pre_gen_prompt_tokens=None
-            pre_gen_completion_tokens=None
+            pre_gen_prompt_tokens = None
+            pre_gen_completion_tokens = None
             if token_counter:
                 pre_gen_prompt_tokens = token_counter.prompt_tokens
                 pre_gen_completion_tokens = token_counter.completion_tokens
@@ -309,7 +325,8 @@ class Prompt(str):
 
             async for tok, logprob in gen:
                 logprobs_sum = add_logprob(logprobs_sum, *logprob)  # type: ignore
-                token_count+=len(logprob)
+                token_count += len(logprob)
+                generated+=tok
                 if stream:
                     await stream(
                         Completion(
@@ -322,15 +339,13 @@ class Prompt(str):
                         ),
                     )
             if token_counter:
-                if (pre_gen_prompt_tokens == token_counter.prompt_tokens):
+                if pre_gen_prompt_tokens == token_counter.prompt_tokens:
                     token_counter._prompt(len(model.encode(text)))
-                if (pre_gen_completion_tokens == token_counter.completion_tokens):
+                if pre_gen_completion_tokens == token_counter.completion_tokens:
                     token_counter._completion(token_count)
 
-                generated += tok
             if stream:
                 await stream(None)
-
             completion = Completion(
                 generated,
                 len(self.prompt),
@@ -345,8 +360,8 @@ class Prompt(str):
             ret = self + completion
             return ret
 
-        #else if constraint is not None...
-        
+        # else if constraint is not None...
+
         partial_completion = ""
         buffer_tokens: List[str] = []
         buffer_logprobs: List[float] = []

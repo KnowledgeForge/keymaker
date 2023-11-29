@@ -217,7 +217,7 @@ class OpenAICompletion(Model):
     ignore_deprecation: bool = False
 
     def __post_init__(self):
-        if not ignore_deprecation:
+        if not self.ignore_deprecation:
             raise Deprecation(
                 "OpenAI has announced the end of their completions API 1/4/24. "
                 "This Keymaker Model class is currently deprecated and use at your own risk until further notice."
