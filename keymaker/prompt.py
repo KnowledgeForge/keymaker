@@ -7,7 +7,7 @@ from keymaker.constraints.base import Constraint
 from keymaker.models.base import ChatModel, Model
 from keymaker.types import Decoder, FormatArg, Stringable
 from keymaker.utils.formatted_completion import format_parser
-from keymaker.utils.general import add_logprob, anoop, exp, noop
+from keymaker.utils.general import add_logprob, anoop, exp, noop, TokenCounter
 
 
 class Completion(str):
@@ -128,6 +128,7 @@ class CompletionConfig:
     timeout: float = 10.0
     truncate: bool = False
     try_first: Optional[bool] = None
+    token_counter: Optional[TokenCounter] = None
 
     def __or__(self, other):
         if isinstance(other, CompletionConfig):
@@ -142,6 +143,7 @@ class CompletionConfig:
             combined.timeout = self.timeout or other.timeout
             combined.truncate = self.truncate or other.truncate
             combined.try_first = self.try_first or other.try_first
+            combined.token_counter = self.token_counter or other.token_counter
             return combined
         else:
             raise TypeError(f"unsupported operand type(s) for |: 'CompletionConfig' and '{type(other).__name__}'")
@@ -256,7 +258,7 @@ class Prompt(str):
             config = completion_kwargs["completion_config"]
         else:
             config = CompletionConfig(*completion_args, **completion_kwargs)
-        config = config | self._default_completion_config
+        config = self._default_completion_config | config
 
         model = config.model
         constraint = config.constraint
@@ -268,6 +270,7 @@ class Prompt(str):
         timeout = config.timeout
         truncate = config.truncate
         try_first = config.try_first
+        token_counter = config.token_counter
 
         if model is None:
             raise ValueError("A model is required for completion")
@@ -294,11 +297,19 @@ class Prompt(str):
                 f"will limit `max_tokens` to {token_limit}.",
             )
         logprobs_sum = 0
+        token_count = 0
         if constraint is None:
             generated = ""
+            pre_gen_prompt_tokens=None
+            pre_gen_completion_tokens=None
+            if token_counter:
+                pre_gen_prompt_tokens = token_counter.prompt_tokens
+                pre_gen_completion_tokens = token_counter.completion_tokens
+            gen = model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout, token_counter=token_counter)
 
-            async for tok, logprob in model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout):
+            async for tok, logprob in gen:
                 logprobs_sum = add_logprob(logprobs_sum, *logprob)  # type: ignore
+                token_count+=len(logprob)
                 if stream:
                     await stream(
                         Completion(
@@ -310,6 +321,11 @@ class Prompt(str):
                             score=exp(add_logprob(0, *logprob)),
                         ),
                     )
+            if token_counter:
+                if (pre_gen_prompt_tokens == token_counter.prompt_tokens):
+                    token_counter._prompt(len(model.encode(text)))
+                if (pre_gen_completion_tokens == token_counter.completion_tokens):
+                    token_counter._completion(token_count)
 
                 generated += tok
             if stream:
@@ -329,11 +345,16 @@ class Prompt(str):
             ret = self + completion
             return ret
 
-        token_count = 0
+        #else if constraint is not None...
+        
         partial_completion = ""
         buffer_tokens: List[str] = []
         buffer_logprobs: List[float] = []
         token = ""
+        from keymaker.constraints import OptionsConstraint
+
+        if options_lens := isinstance(constraint, OptionsConstraint) and max(map(len, map(model.encode, constraint.options))):
+            max_tokens = max_tokens and min(max_tokens, options_lens)
         free_attempt = try_first
 
         async def send_stream(value: Stringable, chunk: bool = False, logprobs: Optional[float] = None):
@@ -370,6 +391,8 @@ class Prompt(str):
                 selected_tokens=None if free_attempt else selected_token_ids,
                 decoder=decoder,
                 timeout=timeout,
+                chunk_size=max_tokens,
+                token_counter=token_counter,
             )
 
             if not generated_tokens:

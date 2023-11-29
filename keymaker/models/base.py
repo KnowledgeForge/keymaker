@@ -3,11 +3,12 @@ from abc import ABC, abstractmethod
 from typing import AsyncGenerator, ClassVar, FrozenSet, List, Optional, Set, Tuple
 
 from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
+from keymaker.utils.general import TokenCounter
 
 
 class Model(ABC):
     """
-    A base model from which to derive all models that generate text
+    A base model from which to derive all models that generate text.
     """
 
     tokens: Tokens
@@ -23,19 +24,21 @@ class Model(ABC):
         selected_tokens: Optional[Set[int]] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
+        token_counter: Optional[TokenCounter] = None,
     ) -> AsyncGenerator[str, None]:
         """
-        Generate text using the Huggingface model.
+        Generate text using the model.
 
         Args:
-            text: The text to generate from.
-            max_length: The maximum length of the generated text.
-            selected_tokens: A set of tokens that should be excluded from the generated text.
-            decoder: A parameterized description of how to select tokens from the distribution
-            timeout: The timeout for the generation process.
+            text (str): The text to generate from.
+            max_tokens (int): The maximum number of tokens in the generated text. Defaults to 1.
+            selected_tokens (Optional[Set[int]]): A set of tokens that should be excluded from the generated text. Defaults to None.
+            decoder (Optional[Decoder]): A parameterized description of how to select tokens from the distribution. Defaults to None.
+            timeout (float): The timeout for the generation process. Defaults to 10.0.
+            token_counter (Optional[TokenCounter]): A counter for tracking token usage. Defaults to None.
 
-        Returns:
-            An iterator of generated text.
+        Yields:
+            str: The generated text.
         """
 
     async def sample(
@@ -44,32 +47,54 @@ class Model(ABC):
         selected_tokens: Optional[SelectedTokens] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
+        chunk_size: Optional[int] = None,
+        token_counter: Optional[TokenCounter] = None,
     ) -> Tuple[List[str], List[float]]:
-        """Sample from the language model given the input text and the selected tokens to constrain the sampling.
+        """
+        Sample from the language model given the input text and the selected tokens to constrain the sampling.
 
         Args:
             text (str): The input text to the language model.
-            selected_tokens (Optional[Set[int]]): The set of token ids to constrain the sampling. Defaults to None.
+            selected_tokens (Optional[SelectedTokens]): The set of token ids to constrain the sampling. Defaults to None.
+            decoder (Optional[Decoder]): A parameterized description of how to select tokens from the distribution. Defaults to None.
+            timeout (float): The timeout for the sampling process. Defaults to 10.0.
+            chunk_size (Optional[int]): The number of tokens to generate in each chunk. Defaults to None.
+            token_counter (Optional[TokenCounter]): A counter for tracking token usage. Defaults to None.
 
         Returns:
-            str: The generated text from the language model.
+            Tuple[List[str], List[float]]: A tuple containing the generated text and the corresponding probabilities.
         """
+        pre_gen_prompt_tokens=None
+        pre_gen_completion_tokens=None
+        if token_counter:
+            pre_gen_prompt_tokens = token_counter.prompt_tokens
+            pre_gen_completion_tokens = token_counter.completion_tokens
+
         gen = self.generate(
             text=text,
-            max_tokens=self.sample_chunk_size,
+            max_tokens=(chunk_size is not None and 0 < chunk_size < self.sample_chunk_size and chunk_size)
+            or self.sample_chunk_size,
             selected_tokens=selected_tokens,
             decoder=decoder,
             timeout=timeout,
+            token_counter=token_counter
         )
+
         ret, probs = [], []
         async for tok, prob in gen:  # type: ignore
             ret.append(tok)
             probs += prob
+        if token_counter:
+            if (pre_gen_prompt_tokens == token_counter.prompt_tokens):
+                    token_counter._prompt(len(self.encode(text)))
+            if (pre_gen_completion_tokens == token_counter.completion_tokens):
+                token_counter._completion(len(probs))
         return ret, probs
 
     @abstractmethod
     def encode(self, text: str) -> TokenIds:
-        """Encode the input text as token ids.
+        """
+        Encode the input text as token ids.
 
         Args:
             text (str): The input text to encode.
@@ -80,7 +105,8 @@ class Model(ABC):
 
     @abstractmethod
     def decode(self, ids: TokenIds) -> str:
-        """Decode the token ids into text.
+        """
+        Decode the token ids into text.
 
         Args:
             ids (TokenIds): The token ids to decode.
@@ -91,19 +117,36 @@ class Model(ABC):
 
     @property
     def vocab_size(self) -> int:
-        """Get the vocabulary size of the language model."""
+        """
+        Get the vocabulary size of the language model.
+
+        Returns:
+            int: The vocabulary size.
+        """
         return len(self.tokens)
 
     @property
     @abstractmethod
     def eos_token_id(self) -> int:
-        """Get the token id of the end of sequence (eos) token."""
+        """
+        Get the token id of the end of sequence (eos) token.
+
+        Returns:
+            int: The token id of the eos token.
+        """
 
     @property
     @abstractmethod
     def bos_token_id(self) -> int:
-        """Get the token id of the beginning of sequence (bos) token."""
+        """
+        Get the token id of the beginning of sequence (bos) token.
+
+        Returns:
+            int: The token id of the bos token.
+        """
 
 
 class ChatModel(Model):
-    """Base model for chat based models"""
+    """
+    Base model for chat-based models.
+    """
