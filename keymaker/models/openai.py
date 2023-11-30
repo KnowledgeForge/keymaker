@@ -24,6 +24,12 @@ def openai_tokens(tokenizer: Encoding) -> Tokens:
         tokens[i] = f"<|special_{i}|>"
     return tokens
 
+def model_encoding(model: str):
+    if model=='chatgpt' or model.startswith('gpt-3'):
+        return 'gpt-3.5-turbo'
+    if model.startswith('gpt-4'):
+        return 'gpt-4'
+    return model
 
 @dataclass
 class OpenAIChat(ChatModel):
@@ -49,7 +55,7 @@ class OpenAIChat(ChatModel):
     addtl_create_kwargs: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
-        self._tokenizer = tiktoken.encoding_for_model(self.model_name)
+        self._tokenizer = tiktoken.encoding_for_model(model_encoding(self.model_name))
         self.tokens = openai_tokens(self._tokenizer)
         self._all_token_ids = set(self.tokens.keys())
 

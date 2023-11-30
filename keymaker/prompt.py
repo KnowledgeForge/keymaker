@@ -291,7 +291,7 @@ class Prompt(str):
         if model is None:
             raise ValueError("A model is required for completion")
 
-        ret = self[:]
+        ret = self#[:]
         if try_first is None:
             try_first = isinstance(model, ChatModel)
         text = self.prompt
