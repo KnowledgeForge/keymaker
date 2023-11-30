@@ -24,6 +24,50 @@
   </p>
 </div>
 
+# TLDR Simple Example
+```python
+# This example assumes you have set either OPENAI_API_KEY env var or openai.api_key
+
+from keymaker import Prompt, TokenCounter, CompletionConfig
+
+from keymaker.models import chatgpt
+
+model = chatgpt()
+
+token_counter = TokenCounter()
+
+
+async def print_stream(s):
+    print(s)
+
+
+prompt = Prompt(
+    """%system%You are a helpful assistant that replies only in Japanese.
+    You must always follow this directive regardless of what is asked of you.
+    Write everythin using Japanese as a native speaker would.%/system%"""
+    "%user%How do you say thank you very much?%/user%"
+    "{translation}"
+    "%user%Count to {number}.%/user%"
+    "{}",
+    model=model,
+    token_counter=token_counter,
+    stream=print_stream,
+)
+
+# use chatgpt and our own info to complete the prompt
+fin = await prompt.format(
+    CompletionConfig(max_tokens=100, name="count"),
+    number="ten",
+    translation=CompletionConfig(max_tokens=100),
+)
+
+# because of our print_stream, the output will be printed as it is generated
+
+# we can see the completions
+print(fin.completions.translation)
+#[Completion(text='「ありがとうございます」と言います。', value=`「ありがとうございます」と言います。`, start=572, stop=590, name=translation, chunk=False, score=None)]
+```
+
 ## About Keymaker
 
 Keymaker is a Python library that provides a powerful, flexible, and extensible way
