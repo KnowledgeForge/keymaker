@@ -1,5 +1,6 @@
 """Exceptions used across Keymaker"""
 
+
 class AggregateException(Exception):
     """
     Exception type that aggregates multiple exceptions.
@@ -23,6 +24,7 @@ class AggregateException(Exception):
 
     def _get_exception_messages(self):
         return "\n".join(str(exc) for exc in self.exceptions)
+
 
 class Deprecation(Exception):
     """

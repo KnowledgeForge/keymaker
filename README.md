@@ -28,13 +28,13 @@
 ```python
 # This example assumes you have set either OPENAI_API_KEY env var or openai.api_key
 
-from keymaker import Prompt, TokenCounter, CompletionConfig
+from keymaker import Prompt, TokenTracker, CompletionConfig
 
 from keymaker.models import chatgpt
 
 model = chatgpt()
 
-token_counter = TokenCounter()
+token_tracker = TokenTracker()
 
 
 async def print_stream(s):
@@ -50,7 +50,7 @@ prompt = Prompt(
     "%user%Count to {number}.%/user%"
     "{}",
     model=model,
-    token_counter=token_counter,
+    token_tracker=TokenTracker,
     stream=print_stream,
 )
 

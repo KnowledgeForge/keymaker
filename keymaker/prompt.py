@@ -7,7 +7,7 @@ from keymaker.constraints.base import Constraint
 from keymaker.models.base import ChatModel, Model
 from keymaker.types import Decoder, FormatArg, Stringable
 from keymaker.utils.formatted_completion import format_parser
-from keymaker.utils.general import add_logprob, anoop, exp, noop, TokenCounter
+from keymaker.utils.general import TokenCount, TokenTracker, add_logprob, anoop, exp, noop
 
 
 class Completion(str):
@@ -30,7 +30,7 @@ class Completion(str):
         value: str,
         start: Optional[int] = None,
         stop: Optional[int] = None,
-        name: Optional[str] = None,
+        name: Optional[Union[int, str]] = None,
         chunk: bool = False,
         score: Optional[float] = None,
     ):
@@ -41,7 +41,7 @@ class Completion(str):
 
     def __init__(
         self,
-        value: str,
+        value: Stringable,
         start: Optional[int] = None,
         stop: Optional[int] = None,
         name: Optional[str] = None,
@@ -50,7 +50,7 @@ class Completion(str):
     ):
         self._value = value
         self._start = start
-        self._stop = stop or (start + len(self))
+        self._stop = stop or (start + len(self))  # type: ignore
         self._chunk = chunk
         self._name = name
         self._score = score
@@ -60,7 +60,7 @@ class Completion(str):
         return str(self)
 
     @property
-    def value(self) -> str:
+    def value(self) -> Stringable:
         return str(self._value) if isinstance(self._value, CompletionConfig) else self._value
 
     @property
@@ -91,7 +91,7 @@ class Completion(str):
         return Completion(
             value=mapped,
             start=self.start,
-            stop=self.start + len(str(mapped)),
+            stop=self.start + len(str(mapped)),  # type: ignore
             chunk=self.chunk,
             name=self.name,
             score=self.score,
@@ -109,7 +109,7 @@ class Completions:
         if name in self._completions:
             self._completions[name].append(completion)
         else:
-            self._completions[name]=[completion]
+            self._completions[name] = [completion]
 
     def __getitem__(self, key):
         return self._completions[key]
@@ -123,9 +123,9 @@ class Completions:
     def __or__(self, other):
         if isinstance(other, Completions):
             combined = Completions()
-            for k,v in self._completions.items():
+            for k, v in self._completions.items():
                 combined.add(v, k)
-            for k,v in other._completions.items():
+            for k, v in other._completions.items():
                 combined.add(v, k)
             return combined
         else:
@@ -144,7 +144,7 @@ class CompletionConfig:
     timeout: float = 10.0
     truncate: bool = False
     try_first: Optional[bool] = None
-    token_counter: Optional[TokenCounter] = None
+    token_tracker: Optional[TokenTracker] = None
 
     def __or__(self, other):
         if isinstance(other, CompletionConfig):
@@ -159,7 +159,7 @@ class CompletionConfig:
             combined.timeout = self.timeout or other.timeout
             combined.truncate = self.truncate or other.truncate
             combined.try_first = self.try_first or other.try_first
-            combined.token_counter = self.token_counter or other.token_counter
+            combined.token_tracker = self.token_tracker or other.token_tracker
             return combined
         else:
             raise TypeError(f"unsupported operand type(s) for |: 'CompletionConfig' and '{type(other).__name__}'")
@@ -242,7 +242,7 @@ class Prompt(str):
                 config = kwargs[name]
             addition = None
             if isinstance(config, CompletionConfig):
-                config.name = config.name or name or unnamed_index
+                config.name = config.name or name or unnamed_index  # type: ignore
                 prompt = await prompt.complete(completion_config=config)
             elif callable(config):
                 config = config(prompt)  # type: ignore
@@ -264,7 +264,7 @@ class Prompt(str):
             else:
                 addition = config  # type: ignore
             if addition is not None:
-                completion = Completion(addition, len(prompt), None, None, False, None)
+                completion = Completion(addition, len(prompt), None, None, False, None)  # type: ignore
                 await default_stream(completion)
                 prompt += completion
         return prompt
@@ -286,12 +286,19 @@ class Prompt(str):
         timeout = config.timeout
         truncate = config.truncate
         try_first = config.try_first
-        token_counter = config.token_counter
+        token_tracker = config.token_tracker
 
         if model is None:
             raise ValueError("A model is required for completion")
 
-        ret = self#[:]
+        token_counter = None
+
+        if token_tracker is not None:
+            token_counter = TokenCount()
+            token_counter.set_config(config)
+            token_tracker.add_token_count(token_counter)
+
+        ret = self  # [:]
         if try_first is None:
             try_first = isinstance(model, ChatModel)
         text = self.prompt
@@ -326,7 +333,7 @@ class Prompt(str):
             async for tok, logprob in gen:
                 logprobs_sum = add_logprob(logprobs_sum, *logprob)  # type: ignore
                 token_count += len(logprob)
-                generated+=tok
+                generated += tok
                 if stream:
                     await stream(
                         Completion(
@@ -340,9 +347,9 @@ class Prompt(str):
                     )
             if token_counter:
                 if pre_gen_prompt_tokens == token_counter.prompt_tokens:
-                    token_counter._prompt(len(model.encode(text)))
+                    token_counter.add_prompt_tokens(len(model.encode(text)))
                 if pre_gen_completion_tokens == token_counter.completion_tokens:
-                    token_counter._completion(token_count)
+                    token_counter.add_completion_tokens(token_count)
 
             if stream:
                 await stream(None)
@@ -368,7 +375,7 @@ class Prompt(str):
         token = ""
         from keymaker.constraints import OptionsConstraint
 
-        if options_lens := isinstance(constraint, OptionsConstraint) and max(map(len, map(model.encode, constraint.options))):
+        if options_lens := isinstance(constraint, OptionsConstraint) and max(map(len, map(model.encode, constraint.options))):  # type: ignore
             max_tokens = max_tokens and min(max_tokens, options_lens)
         free_attempt = try_first
 

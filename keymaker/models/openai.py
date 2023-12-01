@@ -2,9 +2,8 @@
 import warnings
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Any, AsyncGenerator, Dict, FrozenSet, List, Optional, Tuple, Callable
+from typing import Any, AsyncGenerator, Dict, FrozenSet, List, Optional, Tuple
 
-import aiohttp
 import openai
 import tiktoken
 from tiktoken import Encoding
@@ -12,8 +11,8 @@ from tiktoken import Encoding
 from keymaker.models.base import ChatModel, Model
 from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
 from keymaker.utils.chat import split_tags
-from keymaker.utils.general import TokenCounter
 from keymaker.utils.exceptions import AggregateException, Deprecation
+from keymaker.utils.general import TokenCount
 
 
 @lru_cache(10)
@@ -24,12 +23,14 @@ def openai_tokens(tokenizer: Encoding) -> Tokens:
         tokens[i] = f"<|special_{i}|>"
     return tokens
 
+
 def model_encoding(model: str):
-    if model=='chatgpt' or model.startswith('gpt-3'):
+    if model == 'chatgpt' or model.startswith('gpt-3'):
         return 'gpt-3.5-turbo'
     if model.startswith('gpt-4'):
         return 'gpt-4'
     return model
+
 
 @dataclass
 class OpenAIChat(ChatModel):
@@ -80,7 +81,7 @@ class OpenAIChat(ChatModel):
         logit_bias: Optional[Dict[str, int]] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
-        token_counter: Optional[TokenCounter] = None,
+        token_counter: Optional[TokenCount] = None,
     ) -> AsyncGenerator[Any, None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
@@ -99,7 +100,7 @@ class OpenAIChat(ChatModel):
 
         if token_counter is not None:
             tot_text = "".join(m["content"] for m in messages)
-            token_counter._prompt(len(self.encode(tot_text)))
+            token_counter.add_prompt_tokens(len(self.encode(tot_text)))
 
         gen_kwargs = {}
         if temperature := decoder.temperature:
@@ -139,7 +140,7 @@ class OpenAIChat(ChatModel):
         selected_tokens: Optional[SelectedTokens] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
-        token_counter: Optional[TokenCounter] = None,
+        token_counter: Optional[TokenCount] = None,
     ) -> AsyncGenerator[Tuple[str, List[None]], None]:
         bias = 100
         # if there are more tokens to keep than ignore, invert the bias
@@ -227,8 +228,8 @@ class OpenAICompletion(Model):
             raise Deprecation(
                 "OpenAI has announced the end of their completions API 1/4/24. "
                 "This Keymaker Model class is currently deprecated and use at your own risk until further notice."
-                "Set `ignore_deprecation = True` to bypass this."
-                )
+                "Set `ignore_deprecation = True` to bypass this.",
+            )
         self._tokenizer = tiktoken.encoding_for_model(self.model_name)
         self.tokens = openai_tokens(self._tokenizer)
         self._all_token_ids = set(self.tokens.keys())
@@ -288,7 +289,7 @@ class OpenAICompletion(Model):
         selected_tokens: Optional[SelectedTokens] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
-        token_counter: Optional[TokenCounter] = None,
+        token_counter: Optional[TokenCount] = None,
     ) -> AsyncGenerator[Any, None]:
         bias = 100
         if selected_tokens and len(selected_tokens) > (self.vocab_size / 2):
@@ -316,7 +317,6 @@ class OpenAICompletion(Model):
                 choice.finish_reason is not None,  # complete generation
             )
 
-        eos_token = self.decode([self.eos_token_id])
         errors = []
         for retries in range(self.max_retries):
             try:

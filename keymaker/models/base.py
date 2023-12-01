@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import AsyncGenerator, ClassVar, FrozenSet, List, Optional, Set, Tuple
 
 from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
-from keymaker.utils.general import TokenCounter
+from keymaker.utils.general import TokenCount
 
 
 class Model(ABC):
@@ -24,7 +24,7 @@ class Model(ABC):
         selected_tokens: Optional[Set[int]] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
-        token_counter: Optional[TokenCounter] = None,
+        token_counter: Optional[TokenCount] = None,
     ) -> AsyncGenerator[str, None]:
         """
         Generate text using the model.
@@ -35,7 +35,7 @@ class Model(ABC):
             selected_tokens (Optional[Set[int]]): A set of tokens that should be excluded from the generated text. Defaults to None.
             decoder (Optional[Decoder]): A parameterized description of how to select tokens from the distribution. Defaults to None.
             timeout (float): The timeout for the generation process. Defaults to 10.0.
-            token_counter (Optional[TokenCounter]): A counter for tracking token usage. Defaults to None.
+            token_counter (Optional[TokenCount]): A counter for tracking token usage. Defaults to None.
 
         Yields:
             str: The generated text.
@@ -48,7 +48,7 @@ class Model(ABC):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         chunk_size: Optional[int] = None,
-        token_counter: Optional[TokenCounter] = None,
+        token_counter: Optional[TokenCount] = None,
     ) -> Tuple[List[str], List[float]]:
         """
         Sample from the language model given the input text and the selected tokens to constrain the sampling.
@@ -59,13 +59,13 @@ class Model(ABC):
             decoder (Optional[Decoder]): A parameterized description of how to select tokens from the distribution. Defaults to None.
             timeout (float): The timeout for the sampling process. Defaults to 10.0.
             chunk_size (Optional[int]): The number of tokens to generate in each chunk. Defaults to None.
-            token_counter (Optional[TokenCounter]): A counter for tracking token usage. Defaults to None.
+            token_counter (Optional[TokenCount]): A counter for tracking token usage. Defaults to None.
 
         Returns:
             Tuple[List[str], List[float]]: A tuple containing the generated text and the corresponding probabilities.
         """
-        pre_gen_prompt_tokens=None
-        pre_gen_completion_tokens=None
+        pre_gen_prompt_tokens = None
+        pre_gen_completion_tokens = None
         if token_counter:
             pre_gen_prompt_tokens = token_counter.prompt_tokens
             pre_gen_completion_tokens = token_counter.completion_tokens
@@ -77,7 +77,7 @@ class Model(ABC):
             selected_tokens=selected_tokens,
             decoder=decoder,
             timeout=timeout,
-            token_counter=token_counter
+            token_counter=token_counter,
         )
 
         ret, probs = [], []
@@ -85,10 +85,10 @@ class Model(ABC):
             ret.append(tok)
             probs += prob
         if token_counter:
-            if (pre_gen_prompt_tokens == token_counter.prompt_tokens):
-                    token_counter._prompt(len(self.encode(text)))
-            if (pre_gen_completion_tokens == token_counter.completion_tokens):
-                token_counter._completion(len(probs))
+            if pre_gen_prompt_tokens == token_counter.prompt_tokens:
+                token_counter.add_prompt_tokens(len(self.encode(text)))
+            if pre_gen_completion_tokens == token_counter.completion_tokens:
+                token_counter.add_completion_tokens(len(probs))
         return ret, probs
 
     @abstractmethod

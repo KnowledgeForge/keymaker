@@ -10,6 +10,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from keymaker.models.base import Model
 from keymaker.types import Decoder, DecodingStrategy, SelectedTokens, TokenIds, Tokens
+from keymaker.utils.general import TokenCount
 
 
 def transformers_tokens(tokenizer: AutoTokenizer) -> Tokens:
@@ -79,6 +80,7 @@ class Huggingface(Model):
         selected_tokens: Optional[SelectedTokens] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
+        token_counter: Optional[TokenCount] = None,
     ) -> AsyncGenerator[Tuple[str, List[float]], None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
