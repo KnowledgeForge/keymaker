@@ -1,5 +1,6 @@
 """The fundamental components of Keymaker Prompts and Completions"""
 import warnings
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Dict, Generator, List, Optional, Union
 
@@ -223,11 +224,15 @@ class Prompt(str):
     def token_length(self, model: Model) -> int:
         return len(model.encode(self.prompt))
 
+    def copy(self) -> "Prompt":
+        return deepcopy(self)
+
     async def format(self, *args: FormatArg, **kwargs: FormatArg) -> "Prompt":  # type: ignore
         formattings = format_parser(self)
-        prompt = self
+        prompt = self.copy()[:0]
         unnamed_index = 0
         default_stream = self._default_completion_config.stream or anoop
+
         for part in formattings:
             if isinstance(part, str):
                 completion = Completion(part, len(prompt), None, None, False, None)
@@ -298,7 +303,8 @@ class Prompt(str):
             token_counter.set_config(config)
             token_tracker.add_token_count(token_counter)
 
-        ret = self  # [:]
+        ret = self
+
         if try_first is None:
             try_first = isinstance(model, ChatModel)
         text = self.prompt
@@ -319,6 +325,7 @@ class Prompt(str):
                 f"`max_total_tokens` {model.max_total_tokens}. "
                 f"will limit `max_tokens` to {token_limit}.",
             )
+
         logprobs_sum = 0
         token_count = 0
         if constraint is None:
@@ -353,6 +360,7 @@ class Prompt(str):
 
             if stream:
                 await stream(None)
+
             completion = Completion(
                 generated,
                 len(self.prompt),

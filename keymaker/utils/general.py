@@ -51,6 +51,9 @@ class TokenTracker:
 
     _counts: List["TokenCount"] = field(default_factory=list)
 
+    def __repr__(self) -> str:
+        return f"TokenTracker(counts = {self._counts})"
+    
     def add_token_count(self, count: "TokenCount"):
         """Adds a token count.
 
@@ -83,11 +86,17 @@ class TokenCount:
     """
 
     _completion_config: Optional["CompletionConfig"] = None
+    _model_str: Optional[str] = None
     _prompt_tokens: int = 0
     _completion_tokens: int = 0
 
     def __repr__(self) -> str:
         return f"TokenCount(completion_config = {self._completion_config}, prompt_tokens = {self._prompt_tokens}, completion_tokens = {self._completion_tokens})"
+
+    def set_model_str(self, model_str: str):
+        if self._model_str is not None:
+            raise ValueError(f"`model_str` already set on {self}.")
+        self._model_str = model_str
 
     def set_config(self, config: "CompletionConfig"):
         if self._completion_config is not None:
@@ -111,6 +120,15 @@ class TokenCount:
             count (int): The number of completion tokens to increment. Defaults to 1.
         """
         self._completion_tokens += count
+
+    @property
+    def model_str(self) -> Optional[str]:
+        if self._model_str is not None:
+            return self._model_str
+        try:
+            return self.completion_config.model.model_name  # type:ignore
+        except Exception:
+            return None
 
     @property
     def completion_config(self) -> Optional["CompletionConfig"]:

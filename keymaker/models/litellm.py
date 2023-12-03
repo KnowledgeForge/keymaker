@@ -110,8 +110,8 @@ class LiteLLM(Model):
             self.allowed_roles,
         )
 
-        if messages[-1]["role"] != self.default_role:
-            messages.append({"role": self.default_role, "content": " "})
+        # if messages[-1]["role"] != self.default_role:
+        #     messages.append({"role": self.default_role, "content": " "})
 
         if token_counter is not None:
             tot_text = "".join(m["content"] for m in messages)
@@ -184,6 +184,7 @@ class LiteLLM(Model):
                 (content is None) or (choice.finish_reason is not None),  # complete generation
             )
 
+        first_iter = False
         async for chat_completion in self._generate(
             text=text,
             max_tokens=max_tokens,
@@ -192,11 +193,15 @@ class LiteLLM(Model):
             timeout=timeout,
             token_counter=token_counter,
         ):
+            if first_iter and token_counter is not None and token_counter.model_str != chat_completion.model:
+                token_counter.set_model_str(chat_completion.model)
+
             content, done = result_handler(chat_completion)
             if done:
                 break
             if content:
                 yield (content, [None])
+            first_iter = False
 
 
 @dataclass
