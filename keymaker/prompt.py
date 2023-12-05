@@ -112,12 +112,18 @@ class Completions:
         else:
             self._completions[name] = [completion]
 
+    def copy(self) -> "Completions":
+        ret = Completions()
+        ret._completions = {k: deepcopy(v) for k, v in self._completions.items()}
+        return ret
+
     def __getitem__(self, key):
         return self._completions[key]
 
     def __getattr__(self, name):
-        if name in self._completions:
-            return self._completions[name]
+        _completions = object.__getattribute__(self, '_completions')
+        if name in _completions:
+            return _completions[name]
         else:
             raise AttributeError(f"'Completions' object has no attribute '{name}'")
 
@@ -219,17 +225,18 @@ class Prompt(str):
         raise TypeError(f"Cannot concatenate object of type {type(other)} with Prompt.")
 
     def __getitem__(self, key):
-        return Prompt(super().__getitem__(key), completions=self.completions, completion_config=self._default_completion_config)
+        return Prompt(
+            super().__getitem__(key),
+            completions=self.completions.copy(),
+            completion_config=self._default_completion_config,
+        )
 
     def token_length(self, model: Model) -> int:
         return len(model.encode(self.prompt))
 
-    def copy(self) -> "Prompt":
-        return deepcopy(self)
-
     async def format(self, *args: FormatArg, **kwargs: FormatArg) -> "Prompt":  # type: ignore
         formattings = format_parser(self)
-        prompt = self.copy()[:0]
+        prompt = self[:0]
         unnamed_index = 0
         default_stream = self._default_completion_config.stream or anoop
 

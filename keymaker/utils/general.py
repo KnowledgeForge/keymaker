@@ -53,7 +53,7 @@ class TokenTracker:
 
     def __repr__(self) -> str:
         return f"TokenTracker(counts = {self._counts})"
-    
+
     def add_token_count(self, count: "TokenCount"):
         """Adds a token count.
 
