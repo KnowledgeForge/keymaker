@@ -342,6 +342,7 @@ class Prompt(str):
             if token_counter:
                 pre_gen_prompt_tokens = token_counter.prompt_tokens
                 pre_gen_completion_tokens = token_counter.completion_tokens
+
             gen = model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout, token_counter=token_counter)
 
             async for tok, logprob in gen:
