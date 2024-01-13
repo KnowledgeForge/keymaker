@@ -68,3 +68,6 @@ ignore = [
 profile = "black"
 line_length = 130
 skip_gitignore = true
+
+[tool.hatch.build.targets.wheel]
+packages=["keymaker"]

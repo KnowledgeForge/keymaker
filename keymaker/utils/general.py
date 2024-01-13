@@ -64,7 +64,7 @@ class TokenTracker:
         Returns:
             TokenCount
         """
-        count = TokenCount()
+        count = TokenCount(_prompt_budget=self.rem_prompt_budget, _completion_budget=self.rem_completion_budget)
         self._counts.append(count)
 
     @property

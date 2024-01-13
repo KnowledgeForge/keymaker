@@ -306,9 +306,8 @@ class Prompt(str):
         token_counter = None
 
         if token_tracker is not None:
-            token_counter = TokenCount()
+            token_counter = token_tracker.new_token_count()
             token_counter.set_config(config)
-            token_tracker.add_token_count(token_counter)
 
         ret = self
 
