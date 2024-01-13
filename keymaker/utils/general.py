@@ -3,6 +3,7 @@
 import math
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List, Optional
+from uuid import uuid4
 
 if TYPE_CHECKING:
     from keymaker.prompt import CompletionConfig
@@ -48,18 +49,22 @@ def exp(x: Optional[float]) -> Optional[float]:
 @dataclass
 class TokenTracker:
     """Tracks token counts."""
-
+    prompt_budget: int = float('inf') #type: ignore
+    completion_budget: int = float('inf') #type: ignore
     _counts: List["TokenCount"] = field(default_factory=list)
 
+
+    
     def __repr__(self) -> str:
         return f"TokenTracker(counts = {self._counts})"
 
-    def add_token_count(self, count: "TokenCount"):
-        """Adds a token count.
+    def new_token_count(self)->"TokenCount":
+        """Makes a token count.
 
-        Args:
-            count: The token count to add.
+        Returns:
+            TokenCount
         """
+        count = TokenCount()
         self._counts.append(count)
 
     @property
@@ -71,6 +76,22 @@ class TokenTracker:
         """
         return self._counts
 
+    @property
+    def rem_prompt_budget(self):
+        return self._prompt_budget - sum(c._prompt_tokens for c in self._count)
+
+    @property
+    def rem_completion_budget(self):
+        return self._completion_budget - sum(c._completion_tokens for c in self._count)
+
+class BudgetExceptionBase(Exception):
+    """Based Exception for going over a token budget"""
+
+class PromptBudgetException(BudgetExceptionBase):
+    "Exceeded prompt token budget"
+
+class CompletionBudgetException(BudgetExceptionBase):
+    "Exceeded completion token budget"
 
 @dataclass(eq=True)
 class TokenCount:
@@ -89,7 +110,13 @@ class TokenCount:
     _model_str: Optional[str] = None
     _prompt_tokens: int = 0
     _completion_tokens: int = 0
+    _prompt_budget: int = float('inf') #type: ignore
+    _completion_budget: int = float('inf') #type: ignore
 
+    @property
+    def id(self)->str:
+        return self._id
+        
     def __repr__(self) -> str:
         return f"TokenCount(completion_config = {self._completion_config}, prompt_tokens = {self._prompt_tokens}, completion_tokens = {self._completion_tokens})"
 
@@ -110,7 +137,11 @@ class TokenCount:
         Args:
             count (int): The number of prompt tokens to increment. Defaults to 1.
         """
-        self._prompt_tokens += count
+
+        temp = self._prompt_tokens + count
+        if temp>self._prompt_budget:
+            raise PromptBudgetException(f"Prompt token budget exceeded. Budget of {self._prompt_budget} got {temp} tokens.")
+        self._prompt_tokens=temp
 
     def add_completion_tokens(self, count: int = 1):
         """
@@ -118,8 +149,12 @@ class TokenCount:
 
         Args:
             count (int): The number of completion tokens to increment. Defaults to 1.
-        """
-        self._completion_tokens += count
+        """        
+        temp = self._completion_tokens + count
+        if temp>self._completion_budget:
+            raise CompletionBudgetException(f"Completion token budget exceeded. Budget of {self._completion_budget} got {temp} tokens.")
+        self._completion_tokens=temp
+
 
     @property
     def model_str(self) -> Optional[str]:

@@ -8,7 +8,7 @@ from keymaker.constraints.base import Constraint
 from keymaker.models.base import ChatModel, Model
 from keymaker.types import Decoder, FormatArg, Stringable
 from keymaker.utils.formatted_completion import format_parser
-from keymaker.utils.general import TokenCount, TokenTracker, add_logprob, anoop, exp, noop
+from keymaker.utils.general import TokenCount, TokenTracker, CompletionBudgetException, add_logprob, anoop, exp, noop
 
 
 class Completion(str):
@@ -332,6 +332,9 @@ class Prompt(str):
                 f"`max_total_tokens` {model.max_total_tokens}. "
                 f"will limit `max_tokens` to {token_limit}.",
             )
+
+        if token_tracker and max_tokens and max_tokens>token_tracker.rem_completion_budget:
+            raise CompletionBudgetException(f"Remaining completion budget {token_tracker.rem_completion_budget} would be exceeded with max tokens to generate of {max_tokens}.")
 
         logprobs_sum = 0
         token_count = 0
