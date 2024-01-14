@@ -78,11 +78,11 @@ class TokenTracker:
 
     @property
     def rem_prompt_budget(self):
-        return self.prompt_budget - sum(c._prompt_tokens for c in self._count)
+        return self.prompt_budget - sum(c._prompt_tokens for c in self._counts)
 
     @property
     def rem_completion_budget(self):
-        return self.completion_budget - sum(c._completion_tokens for c in self._count)
+        return self.completion_budget - sum(c._completion_tokens for c in self._counts)
 
 class BudgetExceptionBase(Exception):
     """Based Exception for going over a token budget"""
