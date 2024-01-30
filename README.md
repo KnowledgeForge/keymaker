@@ -58,7 +58,8 @@ prompt = Prompt(
 fin = await prompt.format(
     CompletionConfig(max_tokens=100, name="count"),
     number="ten",
-    translation=CompletionConfig(max_tokens=100),
+    # completions can be functions or generators that change their behavior based on the state (state is the prompt at hand)
+    translation=lambda state: CompletionConfig(max_tokens=100),
 )
 
 # because of our print_stream, the output will be printed as it is generated
