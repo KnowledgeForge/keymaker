@@ -82,6 +82,7 @@ class OpenAIChat(ChatModel):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
+        gen_kwargs: Optional[dict] = None
     ) -> AsyncGenerator[Any, None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
@@ -102,7 +103,7 @@ class OpenAIChat(ChatModel):
             tot_text = "".join(m["content"] for m in messages)
             token_counter.add_prompt_tokens(len(self.encode(tot_text)))
 
-        gen_kwargs = {}
+        gen_kwargs = gen_kwargs or {}
         if temperature := decoder.temperature:
             gen_kwargs["temperature"] = temperature
         if top_p := decoder.top_p:
@@ -141,6 +142,7 @@ class OpenAIChat(ChatModel):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
+        gen_kwargs: Optional[dict] = None
     ) -> AsyncGenerator[Tuple[str, List[None]], None]:
         bias = 100
         # if there are more tokens to keep than ignore, invert the bias
@@ -179,6 +181,7 @@ class OpenAIChat(ChatModel):
                     decoder=decoder,
                     timeout=timeout,
                     token_counter=token_counter,
+                    gen_kwargs=gen_kwargs,
                 ):
                     content, done = result_handler(chat_completion)
                     if done:

@@ -152,6 +152,7 @@ class CompletionConfig:
     truncate: bool = False
     try_first: Optional[bool] = None
     token_tracker: Optional[TokenTracker] = None
+    gen_kwargs: Optional[dict] = None
 
     def __or__(self, other):
         if isinstance(other, CompletionConfig):
@@ -167,6 +168,7 @@ class CompletionConfig:
             combined.truncate = self.truncate or other.truncate
             combined.try_first = self.try_first or other.try_first
             combined.token_tracker = self.token_tracker or other.token_tracker
+            combined.gen_kwargs = self.gen_kwargs or other.gen_kwargs
             return combined
         else:
             raise TypeError(f"unsupported operand type(s) for |: 'CompletionConfig' and '{type(other).__name__}'")
@@ -299,6 +301,7 @@ class Prompt(str):
         truncate = config.truncate
         try_first = config.try_first
         token_tracker = config.token_tracker
+        gen_kwargs = config.gen_kwargs
 
         if model is None:
             raise ValueError("A model is required for completion")
@@ -345,7 +348,7 @@ class Prompt(str):
                 pre_gen_prompt_tokens = token_counter.prompt_tokens
                 pre_gen_completion_tokens = token_counter.completion_tokens
 
-            gen = model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout, token_counter=token_counter)
+            gen = model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout, token_counter=token_counter, gen_kwargs=gen_kwargs)
 
             async for tok, logprob in gen:
                 logprobs_sum = add_logprob(logprobs_sum, *logprob)  # type: ignore
@@ -433,6 +436,7 @@ class Prompt(str):
                 timeout=timeout,
                 chunk_size=max_tokens,
                 token_counter=token_counter,
+                gen_kwargs=gen_kwargs
             )
 
             if not generated_tokens:

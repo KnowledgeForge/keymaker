@@ -97,6 +97,7 @@ class LiteLLM(Model):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
+        gen_kwargs: Optional[dict] = None
     ) -> AsyncGenerator[Any, None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
@@ -117,7 +118,7 @@ class LiteLLM(Model):
             tot_text = "".join(m["content"] for m in messages)
             token_counter.add_prompt_tokens(len(self.encode(tot_text)))
 
-        gen_kwargs = {}
+        gen_kwargs = gen_kwargs or  {}
         if temperature := decoder.temperature:
             gen_kwargs["temperature"] = temperature
         if top_p := decoder.top_p:
@@ -137,11 +138,11 @@ class LiteLLM(Model):
                 gen_kwargs["top_k"] = 1
 
         payload = {
+            **gen_kwargs, # type: ignore
             "messages": messages,
             "logit_bias": logit_bias,
             "model": self.model_name,
             "max_tokens": max_tokens,
-            **gen_kwargs,  # type: ignore
         }
 
         completion_stream = await self.client.acompletion(**self.addtl_create_kwargs, **payload, stream=True)
@@ -156,6 +157,7 @@ class LiteLLM(Model):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
+        gen_kwargs: Optional[dict] = None
     ) -> AsyncGenerator[Tuple[str, List[None]], None]:
         bias = 100
         # if there are more tokens to keep than ignore, invert the bias
@@ -192,6 +194,7 @@ class LiteLLM(Model):
             decoder=decoder,
             timeout=timeout,
             token_counter=token_counter,
+            gen_kwargs=gen_kwargs,
         ):
             if first_iter and token_counter is not None and token_counter.model_str != chat_completion.model:
                 token_counter.set_model_str(chat_completion.model)

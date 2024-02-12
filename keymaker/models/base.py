@@ -25,6 +25,7 @@ class Model(ABC):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
+        gen_kwargs: Optional[dict] = None,
     ) -> AsyncGenerator[str, None]:
         """
         Generate text using the model.
@@ -36,7 +37,7 @@ class Model(ABC):
             decoder (Optional[Decoder]): A parameterized description of how to select tokens from the distribution. Defaults to None.
             timeout (float): The timeout for the generation process. Defaults to 10.0.
             token_counter (Optional[TokenCount]): A counter for tracking token usage. Defaults to None.
-
+            gen_kwargs (Optional[dict]): optional additional args to pass for generation
         Yields:
             str: The generated text.
         """
@@ -49,6 +50,7 @@ class Model(ABC):
         timeout: float = 10.0,
         chunk_size: Optional[int] = None,
         token_counter: Optional[TokenCount] = None,
+        gen_kwargs: Optional[dict] = None,
     ) -> Tuple[List[str], List[float]]:
         """
         Sample from the language model given the input text and the selected tokens to constrain the sampling.
@@ -60,6 +62,7 @@ class Model(ABC):
             timeout (float): The timeout for the sampling process. Defaults to 10.0.
             chunk_size (Optional[int]): The number of tokens to generate in each chunk. Defaults to None.
             token_counter (Optional[TokenCount]): A counter for tracking token usage. Defaults to None.
+            gen_kwargs (Optional[dict]): optional additional args to pass for generation
 
         Returns:
             Tuple[List[str], List[float]]: A tuple containing the generated text and the corresponding probabilities.
@@ -78,6 +81,7 @@ class Model(ABC):
             decoder=decoder,
             timeout=timeout,
             token_counter=token_counter,
+            gen_kwargs=gen_kwargs,
         )
 
         ret, probs = [], []
