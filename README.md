@@ -53,13 +53,15 @@ prompt = Prompt(
     token_tracker=TokenTracker,
     stream=print_stream,
 )
-
+def translation(state):
+    yield CompletionConfig(max_tokens=100)
+    
 # use chatgpt and our own info to complete the prompt
 fin = await prompt.format(
     CompletionConfig(max_tokens=100, name="count"),
     number="ten",
     # completions can be functions or generators that change their behavior based on the state (state is the prompt at hand)
-    translation=lambda state: CompletionConfig(max_tokens=100),
+    translation=translation,
 )
 
 # because of our print_stream, the output will be printed as it is generated

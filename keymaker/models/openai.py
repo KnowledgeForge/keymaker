@@ -164,11 +164,12 @@ class OpenAIChat(ChatModel):
                 logit_bias[str(idx)] = bias
 
         def result_handler(response):
-            choice = response.choices[0]
-            content = choice.delta.content
+            choice = response.choices and response.choices[0]
+            content = choice and choice.delta.content or ''
+            finish_reason = choice and choice.finish_reason or None
             return (
                 content,  # content
-                (content is None) or (choice.finish_reason is not None),  # complete generation
+                finish_reason is not None,  # complete generation
             )
 
         errors = []
@@ -313,11 +314,12 @@ class OpenAICompletion(Model):
                 logit_bias[str(idx)] = bias
 
         def result_handler(response):
-            choice = response.choices[0]
-            delta = choice.delta
+            choice = response.choices and response.choices[0]
+            content = choice and choice.delta.content or ''
+            finish_reason = choice and choice.finish_reason or None
             return (
-                (delta.text, delta.logprobs.token_logprobs),  # content
-                choice.finish_reason is not None,  # complete generation
+                content,  # content
+                finish_reason is not None,  # complete generation
             )
 
         errors = []

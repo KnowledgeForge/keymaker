@@ -249,7 +249,7 @@ class Prompt(str):
                 prompt += completion
                 continue
             name = part.name
-            if name is None:
+            if not name:
                 config = args[unnamed_index]
                 unnamed_index += 1
             else:
