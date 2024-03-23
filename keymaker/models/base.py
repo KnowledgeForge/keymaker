@@ -26,6 +26,7 @@ class Model(ABC):
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
         gen_kwargs: Optional[dict] = None,
+        stream: bool = True,
     ) -> AsyncGenerator[str, None]:
         """
         Generate text using the model.

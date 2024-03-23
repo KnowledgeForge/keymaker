@@ -1,4 +1,5 @@
 """The fundamental components of Keymaker Prompts and Completions"""
+
 import warnings
 from copy import deepcopy
 from dataclasses import dataclass
@@ -121,7 +122,7 @@ class Completions:
         return self._completions[key]
 
     def __getattr__(self, name):
-        _completions = object.__getattribute__(self, '_completions')
+        _completions = object.__getattribute__(self, "_completions")
         if name in _completions:
             return _completions[name]
         else:
@@ -335,8 +336,10 @@ class Prompt(str):
                 f"will limit `max_tokens` to {token_limit}.",
             )
 
-        if token_tracker and max_tokens and max_tokens>token_tracker.rem_completion_budget:
-            raise CompletionBudgetException(f"Remaining completion budget {token_tracker.rem_completion_budget} would be exceeded with max tokens to generate of {max_tokens}.")
+        if token_tracker and max_tokens and max_tokens > token_tracker.rem_completion_budget:
+            raise CompletionBudgetException(
+                f"Remaining completion budget {token_tracker.rem_completion_budget} would be exceeded with max tokens to generate of {max_tokens}."
+            )
 
         logprobs_sum = 0
         token_count = 0
@@ -348,8 +351,18 @@ class Prompt(str):
                 pre_gen_prompt_tokens = token_counter.prompt_tokens
                 pre_gen_completion_tokens = token_counter.completion_tokens
 
-            gen = model.generate(text, max_tokens=token_limit, decoder=decoder, timeout=timeout, token_counter=token_counter, gen_kwargs=gen_kwargs)
-
+            gen = model.generate(
+                text,
+                max_tokens=token_limit,
+                decoder=decoder,
+                timeout=timeout,
+                token_counter=token_counter,
+                gen_kwargs=gen_kwargs,
+                # there is already no constrain in this block
+                # if there is no stream either we do not need to use a stream call
+                stream=bool(stream),
+            )
+            
             async for tok, logprob in gen:
                 logprobs_sum = add_logprob(logprobs_sum, *logprob)  # type: ignore
                 token_count += len(logprob)
@@ -365,6 +378,7 @@ class Prompt(str):
                             score=exp(add_logprob(0, *logprob)),
                         ),
                     )
+
             if token_counter:
                 if pre_gen_prompt_tokens == token_counter.prompt_tokens:
                     token_counter.add_prompt_tokens(len(model.encode(text)))
@@ -436,7 +450,7 @@ class Prompt(str):
                 timeout=timeout,
                 chunk_size=max_tokens,
                 token_counter=token_counter,
-                gen_kwargs=gen_kwargs
+                gen_kwargs=gen_kwargs,
             )
 
             if not generated_tokens:

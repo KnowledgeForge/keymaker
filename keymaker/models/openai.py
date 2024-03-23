@@ -82,7 +82,8 @@ class OpenAIChat(ChatModel):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
-        gen_kwargs: Optional[dict] = None
+        gen_kwargs: Optional[dict] = None,
+        stream: bool = True,
     ) -> AsyncGenerator[Any, None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
@@ -142,7 +143,8 @@ class OpenAIChat(ChatModel):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
-        gen_kwargs: Optional[dict] = None
+        gen_kwargs: Optional[dict] = None,
+        stream: bool = True,
     ) -> AsyncGenerator[Tuple[str, List[None]], None]:
         bias = 100
         # if there are more tokens to keep than ignore, invert the bias
@@ -259,6 +261,7 @@ class OpenAICompletion(Model):
         logit_bias: Optional[Dict[str, int]] = None,
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
+        stream: bool = True,
     ) -> AsyncGenerator[str, None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
@@ -294,6 +297,7 @@ class OpenAICompletion(Model):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
+        stream: bool = True,
     ) -> AsyncGenerator[Any, None]:
         bias = 100
         if selected_tokens and len(selected_tokens) > (self.vocab_size / 2):
@@ -331,6 +335,7 @@ class OpenAICompletion(Model):
                     logit_bias=logit_bias,
                     decoder=decoder,
                     timeout=timeout,
+                    stream=stream,
                 ):
                     content, done = result_handler(chat_completion)
                     if done:

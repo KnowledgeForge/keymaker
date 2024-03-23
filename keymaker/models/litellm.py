@@ -97,7 +97,8 @@ class LiteLLM(Model):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
-        gen_kwargs: Optional[dict] = None
+        gen_kwargs: Optional[dict] = None,
+        stream: bool = True,
     ) -> AsyncGenerator[Any, None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
@@ -145,9 +146,18 @@ class LiteLLM(Model):
             "max_tokens": max_tokens,
         }
 
-        completion_stream = await self.client.acompletion(**self.addtl_create_kwargs, **payload, stream=True)
-        async for chat_completion in completion_stream:
-            yield chat_completion
+        completion_stream = await self.client.acompletion(**self.addtl_create_kwargs, **payload, stream=stream)
+        
+        if not stream:
+            class Choice:
+                finish_reason = completion_stream.choices[0].finish_reason
+                delta = completion_stream.choices[0].message
+            class Chunk:
+                choices = [Choice]
+            yield Chunk
+        else:
+            async for chat_completion in completion_stream:
+                yield chat_completion
 
     async def generate(  # type: ignore
         self,
@@ -157,7 +167,8 @@ class LiteLLM(Model):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
-        gen_kwargs: Optional[dict] = None
+        gen_kwargs: Optional[dict] = None,
+        stream: bool = True,
     ) -> AsyncGenerator[Tuple[str, List[None]], None]:
         bias = 100
         # if there are more tokens to keep than ignore, invert the bias
@@ -196,15 +207,18 @@ class LiteLLM(Model):
             timeout=timeout,
             token_counter=token_counter,
             gen_kwargs=gen_kwargs,
+            stream=stream,
         ):
+            
             if first_iter and token_counter is not None and token_counter.model_str != chat_completion.model:
                 token_counter.set_model_str(chat_completion.model)
 
             content, done = result_handler(chat_completion)
+            if content:
+                yield (content, [None] if stream else [None]*len(self.encode(content)))
             if done:
                 break
-            if content:
-                yield (content, [None])
+
             first_iter = False
 
 

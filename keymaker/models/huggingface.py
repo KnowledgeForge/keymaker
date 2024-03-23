@@ -81,6 +81,7 @@ class Huggingface(Model):
         decoder: Optional[Decoder] = None,
         timeout: float = 10.0,
         token_counter: Optional[TokenCount] = None,
+        stream: bool = True,
     ) -> AsyncGenerator[Tuple[str, List[float]], None]:
         decoder = decoder or Decoder()
         if decoder.strategy not in self.supported_decodings:
