@@ -153,6 +153,7 @@ class CompletionConfig:
     truncate: bool = False
     try_first: Optional[bool] = None
     token_tracker: Optional[TokenTracker] = None
+    exception_handler: Optional[Callable[[Exception, "CompletionConfig"], "CompletionConfig"]] = None
     gen_kwargs: Optional[dict] = None
 
     def __or__(self, other):
@@ -169,6 +170,7 @@ class CompletionConfig:
             combined.truncate = self.truncate or other.truncate
             combined.try_first = self.try_first or other.try_first
             combined.token_tracker = self.token_tracker or other.token_tracker
+            combined.exception_handler = self.exception_handler or other.exception_handler
             combined.gen_kwargs = self.gen_kwargs or other.gen_kwargs
             return combined
         else:
@@ -289,7 +291,17 @@ class Prompt(str):
             config = completion_kwargs["completion_config"]
         else:
             config = CompletionConfig(*completion_args, **completion_kwargs)
-        config = self._default_completion_config | config
+        config = config |self._default_completion_config
+
+        try:
+            return await self._complete(config)
+        except Exception as exc:
+            if config.exception_handler:
+                return await self.complete(completion_config=config.exception_handler(exc, config))
+            else:
+                raise exc
+
+    async def _complete(self, config) -> "Prompt":
 
         model = config.model
         constraint = config.constraint
