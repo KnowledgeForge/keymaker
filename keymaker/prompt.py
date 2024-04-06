@@ -291,13 +291,14 @@ class Prompt(str):
             config = completion_kwargs["completion_config"]
         else:
             config = CompletionConfig(*completion_args, **completion_kwargs)
-        config = config |self._default_completion_config
-
+        config = config | self._default_completion_config
+        
         try:
             return await self._complete(config)
         except Exception as exc:
             if config.exception_handler:
-                return await self.complete(completion_config=await config.exception_handler(exc, config))
+                new_config = await config.exception_handler(exc, config)
+                return await self.complete(completion_config=new_config|config)
             else:
                 raise exc
 
